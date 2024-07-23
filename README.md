@@ -1,7 +1,7 @@
 # DetectHsStorms
 This is a python code for detecting and tracking "storms" of Significant wave height (Hs) in models.
 
-N.B: More infos on the code can be found in **Readme.pdf**
+N.B: More infos on the code can be found in **doc.pdf**
 
 
 ## Environment requirements
