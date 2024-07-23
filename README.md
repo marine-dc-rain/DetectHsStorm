@@ -51,3 +51,9 @@ track) | 11 : all_tracking_steps
 Force a reprocessing for the tracking steps : existing files will be deleted and re computed
 --multiprocessing Use multiprocessing to run the code
 ```
+Step option :
+|Step Number         | 0 | 1 | 2 | 111 | 110 | 11 |
+|--------------------|---|---|---|-----|-----|----|
+|Detection           | x |   |   |  x  |  x  |    |
+|Internal tracking   |   | x |   |  x  |  x  |  x |
+|Transition tracking |   |   | x |  x  |     |  x |
