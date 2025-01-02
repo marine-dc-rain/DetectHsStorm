@@ -61,12 +61,12 @@ class StormDetectionTracking:
 			Nb_CPU = mp.cpu_count()
 		else:
 			Nb_CPU = cte.Nb_CPU 
-		PATH_ALTI_in=alti.alti_paths(self._args.mission)
+		PATH_ALTI_in,TAG_ALTI=alti.alti_paths(self._args.mission)
 		for mm,yy in months_years:
 			count = 0
 			dt_mes0 = datetime.now() 
 			filename = PATH_ALTI_in.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
-			_filesave = alti.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			_filesave = alti.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}').replace('ALT',TAG_ALTI)
 			filesave = os.path.join(cte.PATH_SAVE_detect,_filesave)
 			if os.path.isfile(filesave):
 				if (args.reprocess == True):
@@ -81,15 +81,15 @@ class StormDetectionTracking:
 			if nfile > 0: 
 				if ismp:
 					pool = mp.Pool(Nb_CPU)
-					results = pool.starmap_async(get_storm_by_file, [(self._args.mission,file_list[it], cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio) for it in range(nfile) ]).get()
+					results = pool.starmap_async(get_storm_by_file, [(self._args.mission,file_list[it],  yy,mm, alti.hs_thresh,alti.min_length,count0==count) for it in range(nfile) ]).get()
 					pool.close()
 					r_xr = xr.concat(results,dim='x').sortby('time')
 				else:
 					results = []
 					for ifile in range(nfile): 
-						print('list:',file_list[ifile])
+						#print('list:',file_list[ifile])
 						#ds = read_WW3_HS_file(filepath,filename)
-						_results,fulltrack,count = get_storm_by_file(self._args.mission,file_list[ifile], alti.hs_thresh,alti.min_length,count0=count )
+						_results,fulltrack,count = get_storm_by_file(self._args.mission,file_list[ifile], yy,mm, alti.hs_thresh,alti.min_length,count0=count )
 						if (len(_results) >0): 
 							results.append(_results)
 						log.info(' -- ifile = '+str(ifile)+' out of '+str(nfile))

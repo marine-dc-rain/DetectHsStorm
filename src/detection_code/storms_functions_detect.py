@@ -99,7 +99,7 @@ def get_storm_info_from_savemap(ds):
 # def get_storm_by_timestep(ds1,levels,Npix_min,amp_thresh, d_thresh_min, d_thresh_max, min_area,  area_forgotten_ratio, plot_output = False, plot_example = False):
 def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
     # --- concat [-180: 360] ----
-    ds2 = ds1.copy(deep=True).sel(longitude=slice(None,0))
+    ds2 = ds1.copy(deep=True).sel(longitude=slice(None,0))  # OK for WW3 that starts at -180 but ERA5 ??? 
     ds2['longitude'] = ds2['longitude']+360.
     dsTot = xr.concat((ds1,ds2),dim='longitude')
     if plot_example:
@@ -271,3 +271,4 @@ def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio,
         return res, fig_end2
     else:
         return res
+

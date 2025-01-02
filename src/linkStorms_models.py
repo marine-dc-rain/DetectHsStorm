@@ -4,7 +4,7 @@
 # === 0. Import Packages ===========================================================
 # ==================================================================================
 import sys
-PATH_with_functions='/home1/datahome/mdecarlo/Python_functions/'
+PATH_with_functions='/'
 sys.path.append(PATH_with_functions)
 
 import os
@@ -22,7 +22,7 @@ import multiprocessing as mp
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
-disttocoast = xr.open_dataarray('/home1/datahome/mdecarlo/Python_functions/distance2coast180.nc')
+disttocoast = xr.open_dataarray('distance2coast180.nc')
 
 PATH = '/home1/datawork/mdecarlo/TBH_Model/'
 
@@ -64,7 +64,7 @@ def haversine(lat1, lon1, lat2, lon2):
 def crosses_land(disttocoast,lat1s,lon1s,lat2s,lon2s,Num_steps=250,is2D=1):
     ''' Function to determine if there is a continent between 2 points.
     with disttocoast obtained from \n 
-    disttocoast = xr.open_dataarray('/home1/datahome/mdecarlo/Python_functions/distance2coast.nc')
+    disttocoast = xr.open_dataarray('distance2coast.nc')
     '''
     import cartopy.geodesic as cgeo
     if (len(lat1s)>1)&(len(lat2s)>1):
