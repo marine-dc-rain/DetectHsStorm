@@ -61,11 +61,15 @@ class StormDetectionTracking:
 			Nb_CPU = mp.cpu_count()
 		else:
 			Nb_CPU = cte.Nb_CPU 
-		PATH_ALTI_in,TAG_ALTI=alti.alti_paths(self._args.mission)
+		if (self._args.origin=='gdr'):
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths(self._args.mission)
+		else:
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_cci(self._args.mission)
 		for mm,yy in months_years:
 			count = 0
 			dt_mes0 = datetime.now() 
 			filename = PATH_ALTI_in.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			print('Will look for satellite files with this pattern:',filename)
 			_filesave = alti.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}').replace('ALT',TAG_ALTI)
 			filesave = os.path.join(cte.PATH_SAVE_detect,_filesave)
 			if os.path.isfile(filesave):
@@ -77,11 +81,19 @@ class StormDetectionTracking:
 					continue
 			file_list = sorted(glob.glob(filename))
 			nfile=len(file_list) 
+			if (len(PATH_ALTI_ii) > 10): 
+			    filenamei = PATH_ALTI_ii.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			    file_listi = sorted(glob.glob(filenamei))
+			    nfilei=len(file_listi) 
+			    if nfilei > nfile: 
+			        nfile=nfilei
+			        file_list=file_listi
+			   
 			#print('TEST:',nfile,filename)
 			if nfile > 0: 
 				if ismp:
 					pool = mp.Pool(Nb_CPU)
-					results = pool.starmap_async(get_storm_by_file, [(self._args.mission,file_list[it],  yy,mm, alti.hs_thresh,alti.min_length,count0==count) for it in range(nfile) ]).get()
+					results = pool.starmap_async(get_storm_by_file, [(self._args.mission,self._args.origin,file_list[it],  yy,mm, alti.hs_thresh,alti.min_length,count0==count) for it in range(nfile) ]).get()
 					pool.close()
 					r_xr = xr.concat(results,dim='x').sortby('time')
 				else:
@@ -89,7 +101,7 @@ class StormDetectionTracking:
 					for ifile in range(nfile): 
 						#print('list:',file_list[ifile])
 						#ds = read_WW3_HS_file(filepath,filename)
-						_results,fulltrack,count = get_storm_by_file(self._args.mission,file_list[ifile], yy,mm, alti.hs_thresh,alti.min_length,count0=count )
+						_results,fulltrack,count = get_storm_by_file(self._args.mission,self._args.origin,file_list[ifile], yy,mm, alti.hs_thresh,alti.min_length,count0=count )
 						if (len(_results) >0): 
 							results.append(_results)
 						log.info(' -- ifile = '+str(ifile)+' out of '+str(nfile))
@@ -265,6 +277,8 @@ class StormDetectionTracking:
 							# usage="%(prog)s [-yyear] [-fyfinal_year] [-mmonth] [-fmfinal_month] [-s'0|1']",
 							# description="%(prog)s v1.1")
 		parser.add_argument("-n","--mission",dest="mission",help="Chose the satellite mission for processing",action="store", default=None, type=str)
+		
+		parser.add_argument("-o","--origin",dest="origin",help="Chose the data source",action="store", default='gdr', type=str)
 		parser.add_argument("-y","--year",dest="year",help="Chose the year for processing",action="store", default=None, type=int)
 		parser.add_argument("-m","--month",dest="month",help="Chose the month for processing",action="store", default=None, type=int)
 		parser.add_argument("-Y","--final_year",dest="final_year",help="Chose the final year to take into account",action="store", default=None, type=int)
