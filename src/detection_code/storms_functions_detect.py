@@ -86,6 +86,7 @@ def get_storm_info_from_savemap(ds):
     idm = ds.hs.idxmax()
     arsum = ds.areakm2.sum()
     hsmax = ds.hs.max()
+    
 
     dsn = xr.Dataset({'lon_max' : (idm.longitude+180)%360 -180, 
                       'lat_max' : idm.latitude, 
@@ -94,6 +95,9 @@ def get_storm_info_from_savemap(ds):
                       'areastorm' : arsum, 
                      }
                     )
+    for addvars in ['dir','t0m1','fp','spr']:
+        varm = ds[addvars].sel(latitude=idm['latitude'].values, longitude=idm['longitude'].values) 
+        dsn=dsn.assign({addvars :varm.values})
     return dsn
 
 # def get_storm_by_timestep(ds1,levels,Npix_min,amp_thresh, d_thresh_min, d_thresh_max, min_area,  area_forgotten_ratio, plot_output = False, plot_example = False):

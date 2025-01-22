@@ -1,6 +1,6 @@
 import sys
-import glob as glob
 import os
+import glob as glob
 import logbook
 import shutil
 
@@ -62,14 +62,15 @@ class StormDetectionTracking:
 		else:
 			Nb_CPU = cte.Nb_CPU 
 		if (self._args.origin=='gdr'):
-		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths(self._args.mission)
-		else:
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_GDR(self._args.mission)
+		if (self._args.origin=='cci'):
 		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_cci(self._args.mission)
+		if (self._args.origin=='l2p'):
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_cci(self._args.mission,version='l2p')
 		for mm,yy in months_years:
 			count = 0
 			dt_mes0 = datetime.now() 
 			filename = PATH_ALTI_in.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
-			print('Will look for satellite files with this pattern:',filename)
 			_filesave = alti.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}').replace('ALT',TAG_ALTI)
 			filesave = os.path.join(cte.PATH_SAVE_detect,_filesave)
 			if os.path.isfile(filesave):
@@ -81,6 +82,7 @@ class StormDetectionTracking:
 					continue
 			file_list = sorted(glob.glob(filename))
 			nfile=len(file_list) 
+			print('Will look for satellite files with this pattern:',filename,nfile)
 			if (len(PATH_ALTI_ii) > 10): 
 			    filenamei = PATH_ALTI_ii.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
 			    file_listi = sorted(glob.glob(filenamei))
@@ -105,8 +107,10 @@ class StormDetectionTracking:
 						if (len(_results) >0): 
 							results.append(_results)
 						log.info(' -- ifile = '+str(ifile)+' out of '+str(nfile))
-					r_xr = xr.concat(results,dim='x').sortby('time')
-				r_xr.to_netcdf(os.path.join(cte.PATH_SAVE_detect,filesave),unlimited_dims={'x':True})
+					if (len(results) >0): 
+						r_xr = xr.concat(results,dim='x').sortby('time')
+				if (len(results) >0): 
+					r_xr.to_netcdf(os.path.join(cte.PATH_SAVE_detect,filesave),unlimited_dims={'x':True})
 				dt_mes = datetime.now() - dt_mes0
 				log.info("---- Detection done for  "+_filesave+" time elapsed = "+str(dt_mes))
 			

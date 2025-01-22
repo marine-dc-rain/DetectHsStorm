@@ -45,7 +45,8 @@ def read_ERA5_HS_file(Files):
 def read_WW3_HS_file(PATH,filename):
     print('reading file:',os.path.join(PATH,filename)) 
     ds0 = xr.open_dataset(os.path.join(PATH,filename))
-    ds = ds0[['longitude','latitude','time','hs']]
+#    ds = ds0[['longitude','latitude','time','hs']]
+    ds = ds0[['longitude','latitude','time','hs','dir','t0m1','fp','spr']]
     all_lats, all_lons = np.meshgrid(ds0['latitude'].data, ds0['longitude'].data, indexing='ij')
     side_length=0.5
     

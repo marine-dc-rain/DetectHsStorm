@@ -16,8 +16,8 @@ if isWW3==1:
 	FORMAT_OUT_tracking = 'WW3_tracking_storm_YYYY_MM.nc'
 	# PATH_SAVE_detect = '/home1/datawork/mdecarlo/TBH_Model/WW3_LOPS/detect/'
 	# PATH_SAVE_tracking = '/home1/datawork/mdecarlo/TBH_Model/WW3_LOPS/tracking/'
-	PATH_SAVE_detect = '/home1/datahome/ardhuin/detect_V2'
-	PATH_SAVE_tracking = '/home1/datahome/ardhuin/tracking_V2'
+	PATH_SAVE_detect = '/home1/datahome/ardhuin/detect_V3'
+	PATH_SAVE_tracking = '/home1/datahome/ardhuin/tracking_V3'
 	# PATH_SAVE_detect = '/home/mdecarlo/Documents/PROJETS/TBH_Tempetes_bdd_historique/Storms_src/output/detect'
 	# PATH_SAVE_tracking = '/home/mdecarlo/Documents/PROJETS/TBH_Tempetes_bdd_historique/Storms_src/output/tracking'
 if isERAc==1:
