@@ -69,8 +69,14 @@ def  alti_paths_GDR(mission)  :
          TAG_ALTI='GDR_S3B'
          
     if mission.lower() in ['sentinel6']:
-         PATH_ALTI_in = '/home/datawork-cersat-public/provider/eumetsat/satellite/l2/sentinel-6a/poseidon-4/p4_2__lr/f08/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6/S6A_P4_2__LR_STD__NT_???_???_YYYYDD*.nc'
+         PATH_ALTI_in = '/home/datawork-cersat-public/provider/eumetsat/satellite/l2/sentinel-6a/poseidon-4/p4_2__lr/f08/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6/S6A_P4_2__LR_STD__NT_???_???_YYYYMM*.nc'
+         PATH_ALTI_ii = '/home/datawork-cersat-public/provider/eumetsat/satellite/l2/sentinel-6a/poseidon-4/p4_2__lr/f09/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6/S6A_P4_2__LR_STD__NT_???_???_YYYYMM*.nc'
          TAG_ALTI='GDR_S6A'
+
+    if mission.lower() in ['swot']:
+         PATH_ALTI_in = '/home/datawork-cersat-public/provider/aviso/satellite/l2/swot/poseidon-3c/igdr/YYYY/???/SWOT_IPS_2PfP???_???_YYYYMM*.nc'
+         PATH_ALTI_ii = '/home/datawork-cersat-public/provider/aviso/satellite/l2/swot/poseidon-3c/igdr/2.0/YYYY/???/SWOT_IPS_2PfP???_???_YYYYMM*.nc'
+         TAG_ALTI='GDR_SWO'
 
     if mission.lower() in ['cfosat']:
          PATH_ALTI_in = '/home/datawork-cersat-public/provider/cnes/satellite/l2/cfosat/swim/swi_l2____/op??/*/YYYY/*/*F_YYYYMM*'
@@ -93,6 +99,15 @@ def  alti_paths_cci(mission,version='1hz')  :
     else:
        rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/1hz/'
        tag1='CCIv4_'
+    if mission.lower() in ['saral']:
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-SARAL-'
+         else: 
+             tag2='CS_LTA__SIR_LRM_1B_'
+         PATH_ALTI_in = rootpath+'saralt/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'saralf/YYYY/???/'+tag2+'YYYYMM*.nc'
+         TAG_ALTI=tag1+'SAR'
+
     if mission.lower() in ['cryosat2']:
          if version=='l2p':
              tag2='ESACCI-SEASTATE-L2P-SWH-CryoSat-2-'
@@ -120,28 +135,40 @@ def  alti_paths_cci(mission,version='1hz')  :
          TAG_ALTI=tag1+'TPT'
 
     if mission.lower() in ['jason1']:
-         PATH_ALTI_in = rootpath+'jason-1e/YYYY/???/JA1_GPS_2P?????_???_YYYYMM*.nc'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Jason-1-'
+         else: 
+             tag2='JA1_GPS_2P?????_???_'
+         PATH_ALTI_in = rootpath+'jason-1e/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA1'    
-
     if mission.lower() in ['jason2']:
          #PATH_ALTI_in = '/home/datawork-cersat-public/provider/cci_seastate/products/v3/data/satellite/altimeter/l2_20Hz/l2/jason-2/YYYY/????/JA2_???_2P?????_???_YYYYMM*.nc'
-         PATH_ALTI_in = rootpath+'jason-2d/YYYY/???/JA2_GPS_2P?????_???_YYYYMM*.nc'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Jason-2-'
+         else: 
+             tag2='JA2_GPS_2P?????_???_'
+         PATH_ALTI_in = rootpath+'jason-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA2'    
 
     if mission.lower() in ['jason3']:
-         PATH_ALTI_in = rootpath+'jason-3d/YYYY/???/JA3_GPS_2P?????_???_YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'jason-3f/YYYY/???/JA3_GPS_2P?????_???_YYYYMM*.nc'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Jason-3-'
+         else: 
+             tag2='JA3_GPS_2P?????_???_'
+         PATH_ALTI_in = rootpath+'jason-3d/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'jason-3f/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA3'    
 
-    if mission.lower() in ['sentinel-3_a_005']:
-         PATH_ALTI_in = rootpath+'sentinel-3_a_005/YYYY/???/S3A_SR_2_WAT____YYYYMM*.SEN3'
+    if mission.lower() in ['sentinel3a']:
+         PATH_ALTI_in = rootpath+'sentinel-3_a_005/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-YYYYMM*.nc'
          TAG_ALTI=tag1+'S3A'    
 
-    if mission.lower() in ['sentinel-3_b_005']:
-         PATH_ALTI_in = rootpath+'sentinel-3_b_005/YYYY/???/S3B_SR_2_WAT____YYYYMM*.SEN3'
+    if mission.lower() in ['sentinel3b']:
+         PATH_ALTI_in = rootpath+'sentinel-3_b_005/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-YYYYMM*.nc'
+         TAG_ALTI=tag1+'S3A'    
          TAG_ALTI=tag1+'S3B'    
 
-    if mission.lower() in ['sentinel-6_a']:
+    if mission.lower() in ['sentinel6a']:
          PATH_ALTI_in = rootpath+'sentinel-6_a_f08/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6'
          PATH_ALTI_ii = rootpath+'sentinel-6_a_f09/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6'
          TAG_ALTI=tag1+'S6A'    

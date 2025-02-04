@@ -1,5 +1,6 @@
 import sys
 import os
+import glob as glob
 import logbook
 import shutil
 
@@ -12,7 +13,7 @@ import pandas as pd
 import xarray as xr
 import multiprocessing as mp
 
-from detection_code.storms_functions_io import py_files, read_WW3_HS_file, read_ERA5_HS_file
+from detection_code.storms_functions_io import py_files, read_WW3_HS_file, read_ERA5_HS_1file
 from detection_code.storms_functions_detect import get_storm_by_timestep
 from detection_code.storms_functions_tracking import track_for_1_file,track_for_1_transition
 import detection_code.params_detect as cte
@@ -61,7 +62,7 @@ class StormDetectionTracking:
 		for mm,yy in months_years:
 			dt_mes0 = datetime.now() 
 			filename = cte.FORMAT_IN.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
-			filepath = cte.PATH.replace('YYYY',f'{yy:04d}')
+			filepath = cte.PATH.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
 			_filesave = cte.FORMAT_OUT_detect.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
 			filesave = os.path.join(cte.PATH_SAVE_detect,_filesave)
 			if os.path.isfile(filesave):
@@ -71,33 +72,30 @@ class StormDetectionTracking:
 				else:
 					log.info("file already exists and no reprocessing => skipping file \n %s"% filesave)
 					continue
-			if 'DD' in cte.FORMAT_IN:
-				# --- stored day by day ----
-				root = os.path.dirname(os.path.join(filepath,filename))
-				list_files = list(py_files(root,suffix='.nc'))
-				print('list:',list_files)
-				ds = read_ERA5_HS_file(list_files)
-				print('READ OK',mm,yy)
-			#if 'ERA5' in cte.FORMAT_IN:
-			#	ds = read_ERA5c_HS_file(filepath,filename)
-			#	print('READ OK',mm,yy)
-			#if 'WW3' in cte.FORMAT_IN:
-			else:
-				ds = read_WW3_HS_file(filepath,filename)
-			if ismp:
-				pool = mp.Pool(Nb_CPU)
-				results = pool.starmap_async(get_storm_by_timestep, [(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio) for it in range(ds.sizes['time'])]).get()
-				pool.close()
-				r_xr = xr.concat(results,dim='x').sortby('time')
-			else:
-				results = []
-				for it in range(ds.sizes['time']):
-					_results = get_storm_by_timestep(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio)
-					if (len(_results) >0): 
-						results.append(_results)
-					if it%25 == 0:
-						log.info(' -- it = '+str(it)+' out of '+str(ds.sizes['time']))
-				r_xr = xr.concat(results,dim='x').sortby('time')
+			list_files = sorted(glob.glob(filepath+filename))
+			#print('list',filepath+filename,'##',list_files)
+			results = []
+			for filename in list_files:
+				if 'era_5' in cte.FORMAT_IN:
+					ds = read_ERA5_HS_1file(filename)
+					print('READ OK',filename)
+				else:
+					ds = read_WW3_HS_file(filename)
+				if ismp:
+					pool = mp.Pool(Nb_CPU)
+					results = pool.starmap_async(get_storm_by_timestep, [(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio,cte.addvarlist) for it in range(ds.sizes['time'])]).get()
+					pool.close()
+					r_xr = xr.concat(results,dim='x').sortby('time')
+				else:
+					for it in range(ds.sizes['time']):
+						_results = get_storm_by_timestep(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio,cte.addvarlist)
+						if (len(_results) >0): 
+							results.append(_results)
+						if it%25 == 0:
+							log.info(' -- it = '+str(it)+' out of '+str(ds.sizes['time']))
+					r_xr = xr.concat(results,dim='x').sortby('time')
+					
+			print('saving to file:',os.path.join(cte.PATH_SAVE_detect,filesave))
 			r_xr.to_netcdf(os.path.join(cte.PATH_SAVE_detect,filesave),unlimited_dims={'x':True})
 			dt_mes = datetime.now() - dt_mes0
 			log.info("---- Detection done for  "+_filesave+" time elapsed = "+str(dt_mes))

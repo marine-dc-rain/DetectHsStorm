@@ -60,7 +60,7 @@ def rename_duplicates(regions,NX):
     regions_dupl2[:,:np.size(map_180360,1)] = np.copy(map_180360)
     regions_dupl2[BN_inters_180==False] = -100
     
-    # if intersectin at 0 = True : change name to original
+    # if intersecting at 0 = True : change name to original
     
     regions_dupl0[BN_inters_0==True] = map_m180180[BN_inters_0==True]
     # regions_dupl2[BN_inters_0==True] = -100
@@ -79,7 +79,7 @@ def rename_duplicates(regions,NX):
         
     return regions_newname, regions_only_big_area ,regions_interOnly
     
-def get_storm_info_from_savemap(ds):
+def get_storm_info_from_savemap(ds,addvarlist=[]):
     '''
     function to be applied by a "MAP" function of xarray
     '''
@@ -95,13 +95,13 @@ def get_storm_info_from_savemap(ds):
                       'areastorm' : arsum, 
                      }
                     )
-    for addvars in ['dir','t0m1','fp','spr']:
+    for addvars in addvarlist:
         varm = ds[addvars].sel(latitude=idm['latitude'].values, longitude=idm['longitude'].values) 
         dsn=dsn.assign({addvars :varm.values})
     return dsn
 
 # def get_storm_by_timestep(ds1,levels,Npix_min,amp_thresh, d_thresh_min, d_thresh_max, min_area,  area_forgotten_ratio, plot_output = False, plot_example = False):
-def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
+def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, addvarlist, plot_output = False, plot_example = False):   
     # --- concat [-180: 360] ----
     ds2 = ds1.copy(deep=True).sel(longitude=slice(None,0))  # OK for WW3 that starts at -180 but ERA5 ??? 
     ds2['longitude'] = ds2['longitude']+360.
@@ -251,7 +251,7 @@ def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio,
     
     ds3=dsTot.assign({'regions' :(('latitude','longitude' ),to_save)})
     g=ds3.where(ds3.regions>-1.,np.nan).groupby('regions')
-    res = g.map(get_storm_info_from_savemap).swap_dims({'regions':'x'})
+    res = g.map(get_storm_info_from_savemap,addvarlist=addvarlist).swap_dims({'regions':'x'})
     res = res.assign_coords(storms_by_t = xr.full_like(res.regions,fill_value=len(g),dtype=int))
 
     if plot_example:

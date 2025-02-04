@@ -25,7 +25,7 @@ def py_files(root,suffix='.nc'):
 			yield from (os.path.join(path, file) for file in files if file[-len(suffix):] == suffix)
 
 def preprocessing_ERA5(ds0):
-    ds = ds0[['longitude050','latitude050','time','swh']]
+    ds = ds0[['longitude050','latitude050','time','swh','mwd','pp1d','mwp','u10','v10']]
     all_lats, all_lons = np.meshgrid(ds0['latitude050'].data, ds0['longitude050'].data, indexing='ij')
     side_length=0.5
     
@@ -35,18 +35,43 @@ def preprocessing_ERA5(ds0):
     ds = ds.rename_dims({'longitude050':'longitude'}).rename_vars({'longitude050':'longitude'})
     ds = ds.rename_dims({'latitude050':'latitude'}).rename_vars({'latitude050':'latitude'})
     ds = ds.rename_vars({'swh':'hs'})
+    ds = ds.rename_vars({'u10':'uwnd'})
+    ds = ds.rename_vars({'v10':'vwnd'})
+    ds = ds.rename_vars({'pp1d':'fp'})
+    ds = ds.rename_vars({'mwd':'dir'})
+    ds = ds.rename_vars({'mwp':'f0m1'})
     
     return ds.assign({'areakm2' : (('latitude','longitude'),areakm2)})
 
+   
 def read_ERA5_HS_file(Files):
     DS = xr.open_mfdataset(Files,preprocess=preprocessing_ERA5,concat_dim='time',combine='nested') #,dask='forbidden') #chunks={'time': 10})
     return DS.compute()
 
-def read_WW3_HS_file(PATH,filename):
-    print('reading file:',os.path.join(PATH,filename)) 
-    ds0 = xr.open_dataset(os.path.join(PATH,filename))
+def read_ERA5_HS_1file(filename):
+    ds0 = xr.open_dataset(filename)
+    ds = ds0[['longitude050','latitude050','time','swh','mwd','pp1d','mwp']]
+    all_lats, all_lons = np.meshgrid(ds0['latitude050'].data, ds0['longitude050'].data, indexing='ij')
+    side_length=0.5
+    
+    lat_lon_grid_cell = np.array([all_lons , all_lats - side_length/2 , all_lons + side_length , all_lats + side_length/2])
+    areakm2 = lat_lon_cell_area(lat_lon_grid_cell) / 1e6
+    
+    ds = ds.rename_dims({'longitude050':'longitude'}).rename_vars({'longitude050':'longitude'})
+    ds = ds.rename_dims({'latitude050':'latitude'}).rename_vars({'latitude050':'latitude'})
+    ds = ds.rename_vars({'swh':'hs'})
+    ds = ds.rename_vars({'pp1d':'fp'})
+    ds = ds.rename_vars({'mwd':'dir'})
+    ds = ds.rename_vars({'mwp':'t0m1'})
+    
+    return ds.assign({'areakm2' : (('latitude','longitude'),areakm2)})
+
+
+def read_WW3_HS_file(filename):
+    print('reading file:',filename) 
+    ds0 = xr.open_dataset(filename)
 #    ds = ds0[['longitude','latitude','time','hs']]
-    ds = ds0[['longitude','latitude','time','hs','dir','t0m1','fp','spr']]
+    ds = ds0[['longitude','latitude','time','hs','dir','t0m1','fp','spr','uwnd','vwnd']]
     all_lats, all_lons = np.meshgrid(ds0['latitude'].data, ds0['longitude'].data, indexing='ij')
     side_length=0.5
     
@@ -55,8 +80,8 @@ def read_WW3_HS_file(PATH,filename):
     
     return ds.assign({'areakm2' : (('latitude','longitude'),areakm2)})
 
-def read_ERA5c_HS_file(PATH,filename):
-    ds0 = xr.open_dataset(os.path.join(PATH,filename))
+def read_ERA5c_HS_file(filename):
+    ds0 = xr.open_dataset(filename)
     ds = ds0[['longitude','latitude','time','hs']]
     all_lats, all_lons = np.meshgrid(ds0['latitude'].data, ds0['longitude'].data, indexing='ij')
     side_length=0.5

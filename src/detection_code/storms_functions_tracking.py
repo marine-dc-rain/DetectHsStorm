@@ -25,28 +25,34 @@ Functions:
 # ==================================================================================
 def one_storm_vs_old_storms(ds1st,dsold,threshold_dist,disttocoast):
 	dist = haversine(ds1st['lat_max'],ds1st['lon_max'],dsold['lat_max'],dsold['lon_max']).compute().data
+	if len(dist) > 0:
 	# get new storm closest to old one
-	imin = np.argmin(dist)
-	# get all new storms close enough to old one 
-	ind_potential_points = np.where(dist < threshold_dist)[0]
-	# Flag if the closest storm is separated from old by land ...
-	croLand = crosses_land(disttocoast,ds1st['lat_max'].data,ds1st['lon_max'].data, dsold.isel(x=imin)['lat_max'].data,dsold.isel(x=imin)['lon_max'].data)
-	# if closest storm cannot be (land in between..) go to other storms close enough
-	while (len(ind_potential_points)>0)&(croLand):
-		dist[imin] = np.inf
 		imin = np.argmin(dist)
+	# get all new storms close enough to old one 
 		ind_potential_points = np.where(dist < threshold_dist)[0]
-		croLand = crosses_land(disttocoast,ds1st['lat_max'].data,ds1st['lon_max'].data,dsold.isel(x=imin)['lat_max'].data,dsold.isel(x=imin)['lon_max'].data)
+	# Flag if the closest storm is separated from old by land ...
+		croLand = crosses_land(disttocoast,ds1st['lat_max'].data,ds1st['lon_max'].data, dsold.isel(x=imin)['lat_max'].data,dsold.isel(x=imin)['lon_max'].data)
+	# if closest storm cannot be (land in between..) go to other storms close enough
+		while (len(ind_potential_points)>0)&(croLand):
+			dist[imin] = np.inf
+			imin = np.argmin(dist)
+			ind_potential_points = np.where(dist < threshold_dist)[0]
+			croLand = crosses_land(disttocoast,ds1st['lat_max'].data,ds1st['lon_max'].data,dsold.isel(x=imin)['lat_max'].data,dsold.isel(x=imin)['lon_max'].data)
 
-	if len(ind_potential_points)>0 : # get the closest point 
-		potential_point = dsold.isel(x=imin)
-		isLinked_to_previous = True
-		X_previous = potential_point['x'].values
-		dist_to_prev = dist[imin]
+		if len(ind_potential_points)>0 : # get the closest point 
+			potential_point = dsold.isel(x=imin)
+			isLinked_to_previous = True
+			X_previous = potential_point['x'].values
+			dist_to_prev = dist[imin]
+		else:
+			isLinked_to_previous = False
+			X_previous = -1
+			dist_to_prev = np.inf
 	else:
 		isLinked_to_previous = False
 		X_previous = -1
 		dist_to_prev = np.inf
+		
 	return isLinked_to_previous, X_previous, dist_to_prev
 		   
 # ---- Fonction to track (= link storms for time T to time T+1) ---------------------
