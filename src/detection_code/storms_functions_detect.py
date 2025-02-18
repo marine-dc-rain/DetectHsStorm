@@ -15,8 +15,8 @@ from detection_code.storms_functions_geo import distance_matrix, spatial_filter
 '''
 Functions:
 - rename_duplicates(regions,NX) : function (internal) to deal with duplication of regions of interest generated while dealing with the -180/180 issue.
-- get_storm_info_from_savemap(ds) : internal function to be applied in get_storm_by_timestep
-- get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
+- get_storm_info_from_savemap(ds) : internal function to be applied in get_storm_from_model_by_timestep
+- get_storm_from_model_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
 '''
 
 def rename_duplicates(regions,NX):
@@ -96,8 +96,8 @@ def get_storm_info_from_savemap(ds):
                     )
     return dsn
 
-# def get_storm_by_timestep(ds1,levels,Npix_min,amp_thresh, d_thresh_min, d_thresh_max, min_area,  area_forgotten_ratio, plot_output = False, plot_example = False):
-def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
+# def get_storm_from_model_by_timestep(ds1,levels,Npix_min,amp_thresh, d_thresh_min, d_thresh_max, min_area,  area_forgotten_ratio, plot_output = False, plot_example = False):
+def get_storm_from_model_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio, plot_output = False, plot_example = False):   
     # --- concat [-180: 360] ----
     ds2 = ds1.copy(deep=True).sel(longitude=slice(None,0))
     ds2['longitude'] = ds2['longitude']+360.
@@ -271,3 +271,155 @@ def get_storm_by_timestep(ds1,levels,amp_thresh, min_area, area_forgotten_ratio,
         return res, fig_end2
     else:
         return res
+
+def get_storm_from_sat_by_file(filename, args_findpeaks, output = 'track', name_select_stats = None, Hs_bins = None):
+    '''
+    Function get_storm_from_sat_by_file
+    INPUTS : - filename : (whole path) str
+             - args_findpeaks : None or dict containing keywords 
+                                    'height':      limits of the height of the signal, associated with min and max as tuple
+                                    'prominence':  limits of the prominence of the peak, associated with min and max as tuple)
+                                    'width':       limits to the width of the peak, MANDATORY to retrieve info on the width of the peak 
+                                                (set to (None,None) if no criterion on width to be given)
+                                    'rel_height':  relative height at which to measure the width's peak.
+                                By default (args_findpeaks set to None), this dictionnary is set to:
+                                args_findpeaks = dict(height=(height_thresh,None),
+                                                      prominence=(0.6*height_thresh,None),
+                                                      width=(5,None),
+                                                      rel_height=relative_height)
+                                with height_thresh = 10 and relative_height = 0.9
+             - output : str amongst ['track','stats','stats_histo'] to define the type of output wanted
+                        - track :       return the dataset with only the peaks selected in it
+                        - stats :       compute the infos at peak such as Hs_max or the width. 
+                                        time, location and others variables from L2 file have to be listed in name_select_stats in order to be selected.
+                        - stats_histo : same as stats + histogram of wave height found in the find
+             - name_select_stats :  None or dict containing the variables to select at the peak position and their name in the output file.
+                                    The name of the variable in the output file is given as the KEY,
+                                    while the name of the variable in the input file is given as the associated VALUE
+                                    By default, 
+                                    name_select_stats = {'lon_max':'lon',
+                                                         'lat_max':'lat',
+                                                         'time_max':'time',
+                                                         'std_Hs_max':'swh_rms',
+                                                         'd2c_max':'distance_to_coast',
+                                                         'swh_noise':'swh_noise',
+                                                         'std_Hs_num_valid':'swh_num_valid'}
+            
+             - Hs_bins : (optionnal) used only if output is 'stats_histos', these are the bins to compute the wave height histograms
+                          By default, Hs_bins = np.arange(0,28,0.2)
+
+
+    '''
+    outputs_valid = ['track','stats','stats_histo']
+    if args_findpeaks is None:
+        height_thresh = 10
+        relative_height = 0.9
+        args_findpeaks = dict(height=(height_thresh,None),prominence=(0.6*height_thresh,None),width=(5,None),rel_height=relative_height)
+    
+    if (name_select_stats is None) & ('stats' in output):
+        name_select_stats = {'lon_max':'lon',
+             'lat_max':'lat',
+             'time_max':'time',
+             'std_Hs_max':'swh_rms',
+             'd2c_max':'distance_to_coast',
+             'swh_noise':'swh_noise',
+             'std_Hs_num_valid':'swh_num_valid'}
+    if output not in outputs_valid:
+        raise ValueError("get_storm_from_sat_by_file: output must be one of %r." % outputs_valid)
+    try:
+        if (Hs_bins is None) & (output == 'stats_histo'):
+            Hs_bins = np.arange(0,28,0.2)
+
+        ds0 = xr.open_dataset(filename).sortby('time')
+        if 'distance_to_coast' in ds0.variables:
+            ds = ds0.where(np.isfinite(ds0.distance_to_coast),drop=True)
+        else:
+            ds = ds0
+        swh_denoised = ds['swh_denoised'].where(ds.swh_quality==3)
+        # swh_denoised = swh_denoised.assign_coords(time=ds.time).interpolate_na(dim='time')
+        peakind,props = sps.find_peaks(swh_denoised.data,**args_findpeaks)
+        peaksel = []
+        if len(peakind)>0:
+            if output == 'stats_histo':
+                H_ips = []
+                H_bases = []
+            if 'stats' in output:
+                props2 = {}
+            if len(peakind)>1:
+                inds_save = []
+                if 'stats' in output:
+                    Hs_max0 = []
+                    ind_left = []
+                    ind_right = []
+                else:
+                    inds_save = []
+                    counts = []
+
+                for ipic, pic in enumerate(peakind):
+                    inddif = np.setdiff1d(np.arange(len(peakind)),ipic)
+
+                    not_inside_bases = (props['left_ips'][ipic] <  props['left_ips'][inddif]) | (props['right_ips'][ipic] >  props['right_ips'][inddif])
+                    not_inside_ips = (props['left_bases'][ipic] <  props['left_bases'][inddif]) | (props['right_bases'][ipic] >  props['right_bases'][inddif])
+                    
+                    if np.all( not_inside_bases &  not_inside_ips):  # not included in any of others => save     
+                        peaksel.append(pic)
+                        i1 = np.floor(props['left_ips'][ipic]).astype(int)
+                        i2 = np.ceil(props['right_ips'][ipic]).astype(int)
+                        if 'stats' in output:
+                            Hs_max0.append(props['peak_heights'][ipic])
+                            ind_left.append(i1)
+                            ind_right.append(i2)
+                        else:
+                            inds_save.append(np.arange(i1,i2))
+                            counts.append(np.ones(i2-i1)*(len(peaksel)-1))
+                        if output == 'stats_histo':
+                            H_ips0,_ = np.histogram(swh_denoised.isel(time=slice(i1, i2)),Hs_bins);
+                            H_bases0,_ = np.histogram(swh_denoised.isel(time=slice(props['left_bases'][ipic], props['right_bases'][ipic])),Hs_bins);
+                            H_ips.append(H_ips0)
+                            H_bases.append(H_bases0)
+    
+                if output == 'track':
+                    inds_save = np.concatenate(inds_save)
+                    counts = np.concatenate(counts) 
+                
+            else: # len(peakind) == 1
+                peaksel = peakind 
+                i1 = np.floor(props['left_ips'][0]).astype(int)
+                i2 = np.ceil(props['right_ips'][0]).astype(int)
+                if 'stats' in output:
+                    Hs_max0 = props['peak_heights']
+                    ind_left = i1
+                    ind_right = i2
+                else:
+                    inds_save = np.arange(i1,i2)
+                    counts = np.zeros(i2-i1)
+                if output == 'stats_histo':
+                    H_ips0,_ = np.histogram(swh_denoised.isel(time=slice(i1, i2)),Hs_bins);
+                    H_bases0,_ = np.histogram(swh_denoised.isel(time=slice(props['left_bases'][0], props['right_bases'][0])),Hs_bins);
+                    H_ips.append(H_ips0)
+                    H_bases.append(H_bases0)
+            
+            if 'stats' in output:
+                Hs_max = xr.DataArray(Hs_max0,dims=['time'])
+                ips_xr = xr.DataArray(np.vstack((ind_left,ind_right)),dims=['nbounds','time'])
+                above_thresh = xr.Dataset(dict(Hs_max = Hs_max,
+                                            ips_xr = ips_xr))
+                for var in name_select_stats:
+                    above_thresh = above_thresh.assign({var : ds[name_select_stats[var]].isel(time=peaksel)})
+                
+                if output == 'stats_histo':
+                    Hs_bases_xr = xr.DataArray(np.vstack(H_bases),dims=['time','hs_bins'])
+                    Hs_ips_xr = xr.DataArray(np.vstack(H_ips),dims=['time','hs_bins'])
+                    above_thresh = above_thresh.assign(Histo_Hs_bases=Hs_bases_xr)
+                    above_thresh = above_thresh.assign(Histo_Hs_ips=Hs_ips_xr)
+
+                above_thresh = above_thresh.swap_dims({'time':'x'})                           
+                above_thresh = above_thresh.assign(filename=("x", np.tile(filename,len(peaksel))))
+            else:
+                above_thresh = ds.isel(time=inds_save).swap_dims({'time':'x'})
+                above_thresh = above_thresh.assign(segment_in_file=("x", counts))
+                above_thresh = above_thresh.assign(filename=("x", np.tile(filename,len(inds_save))))
+
+            return above_thresh, filename
+    except Exception as inst:
+        print('filename :',filename,',', inst,', line number : ',sys.exc_info()[2].tb_lineno)

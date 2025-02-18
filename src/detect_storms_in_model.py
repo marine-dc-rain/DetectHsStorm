@@ -13,7 +13,7 @@ import xarray as xr
 import multiprocessing as mp
 
 from detection_code.storms_functions_io import py_files, read_WW3_HS_file, read_ERA5_HS_file
-from detection_code.storms_functions_detect import get_storm_by_timestep
+from detection_code.storms_functions_detect import get_storm_from_model_by_timestep
 from detection_code.storms_functions_tracking import track_for_1_file,track_for_1_transition
 import detection_code.params_detect as cte
 
@@ -79,13 +79,13 @@ class StormDetectionTracking:
 				ds = read_WW3_HS_file(cte.PATH,filename)
 			if ismp:
 				pool = mp.Pool(Nb_CPU)
-				results = pool.starmap_async(get_storm_by_timestep, [(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio) for it in range(ds.sizes['time'])]).get()
+				results = pool.starmap_async(get_storm_from_model_by_timestep, [(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio) for it in range(ds.sizes['time'])]).get()
 				pool.close()
 				r_xr = xr.concat(results,dim='x').sortby('time')
 			else:
 				results = []
 				for it in range(ds.sizes['time']):
-					_results = get_storm_by_timestep(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio)
+					_results = get_storm_from_model_by_timestep(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio)
 					results.append(_results)
 					if it%25 == 0:
 						log.info(' -- it = '+str(it)+' over '+str(ds.sizes['time']))
