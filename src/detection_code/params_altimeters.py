@@ -280,6 +280,8 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
     '''
     reads altimeter data (LRM 1Hz only) from file name. 
     The outout is a xarray dataset 
+    NB: here are te variables in ccp l2p V4 : dimensions(sizes): time(25)
+    variables(dimensions): float64 time(time), float64 lon(time), float64 lat(time), float64 swh(time), float64 swh_rms(time), int8 swh_numval(time), int8 swh_quality_level(time), int8 swh_rejection_flags(time), float64 swh_corrected(time), float64 swh_corrected_rms(time), int8 swh_corrected_numval(time), int8 swh_corrected_quality_level(time), int8 swh_corrected_rejection_flags(time), float64 sigma0_ku(time), float64 sigma0_ku_rms(time), int8 sigma0_ku_numval(time), int8 sigma0_ku_quality_level(time), int8 sigma0_ku_rejection_flags(time), int32 distance_to_coast(time), int32 bathymetry(time), float64 sea_ice_fraction(time), float32 era5_tclw(time), float32 era5_t2m(time), float32 era5_sst(time), float32 era5_u10(time), float32 era5_v10(time), float32 era5_sp(time), float32 era5wave_p140121(time), float32 era5wave_mpww(time), float32 era5wave_swh(time), float32 era5wave_p1ps(time), float32 era5wave_pp1d(time), float32 era5wave_shww(time), float32 era5wave_mwp(time), float32 era5wave_p140122(time), float32 era5wave_mwd(time), float32 era5wave_mdww(time), float32 ww3_uwnd(time), float32 ww3_t01(time), float32 ww3_fp(time), float32 ww3_vwnd(time), float32 ww3_t02(time), float32 ww3_hs(time), float32 ww3_dir(time)
     '''
 
     import xarray as xr
@@ -306,10 +308,12 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
         )
 
     if version=='l2p':
-       l2paddvars=['ww3_swh','ww3_qkk','swh_denoised','swh_denoised_uncertainty']
+       ds = ds.rename({'swh_1hz': 'swh_not_denoised'})
+       l2paddvars=['ww3_hs','ww3_qkk','swh_denoised','swh_denoised_uncertainty','era5wave_swh']
        for addvar in l2paddvars: 
            thisvar=np.ma.getdata(S.variables[addvar][:])
-           ds=ds.assign({addvar : ((time),thisvar)})
+           ds=ds.assign({addvar : (('time'),thisvar)})
+       ds = ds.rename({'swh_denoised': 'swh_1hz'})
     return ds
 
 ######################  Generic reading of altimeter data: waveforms and 20Hz parameters
@@ -513,15 +517,15 @@ def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,
     res=[]
     ds3=[]
     count1=count0
-    try:
-   #for iloop in [0]:
-        if origin=='gdr':
-            ds=alti_read_l2lr(mission,filename)
-        else:
-          ds=alti_read_l2lr_cci(mission,filename,version=origin)
-    except:
-        print('Problem in reading from '+origin+' file:',filename)  
-        return ds3,res,count1
+    ds=alti_read_l2lr_cci(mission,filename,version=origin)
+#    try:
+#        if origin=='gdr':
+#            ds=alti_read_l2lr(mission,filename)
+#        else:
+#          ds=alti_read_l2lr_cci(mission,filename,version=origin)
+#    except:
+#        print('Problem in reading from '+origin+' file:',filename)  
+#        return ds3,res,count1
    
     #inds=np.where(flag1 > 0)[0]
 #   First step: finds points above threshold 
