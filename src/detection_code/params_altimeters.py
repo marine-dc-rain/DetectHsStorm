@@ -308,12 +308,19 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
         )
 
     if version=='l2p':
-       ds = ds.rename({'swh_1hz': 'swh_not_denoised'})
-       l2paddvars=['ww3_hs','ww3_qkk','swh_denoised','swh_denoised_uncertainty','era5wave_swh']
+       if 'swh_corrected_denoised' in S.variables:
+          denoisevar='swh_corrected_denoised'
+          denoiseunc='swh_corrected_denoised_uncertainty'
+       else:
+          denoisevar='swh_denoised'
+          denoiseunc='swh_denoised_uncertainty'
+       ds = ds.rename({'swh_1hz': denoisevar})
+       l2paddvars=['ww3_hs','ww3_qkk',denoisevar,denoiseunc,'era5wave_swh']
        for addvar in l2paddvars: 
            thisvar=np.ma.getdata(S.variables[addvar][:])
            ds=ds.assign({addvar : (('time'),thisvar)})
-       ds = ds.rename({'swh_denoised': 'swh_1hz'})
+       ds = ds.rename({denoisevar: 'swh_1hz'})
+       ds = ds.rename({denoiseunc: 'swh_denoised_uncertainty'})
     return ds
 
 ######################  Generic reading of altimeter data: waveforms and 20Hz parameters
