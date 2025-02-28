@@ -118,20 +118,36 @@ def  alti_paths_cci(mission,version='1hz')  :
          TAG_ALTI=tag1+'CS2'
 
     if mission.lower() in ['ers1']:
-         PATH_ALTI_in = rootpath+'ers-1-reaper/YYYY/???/E1_REAP_ERS_ALT_2__YYYYMM*.NC' 
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-ERS-1-'
+         else: 
+             tag2='E1_REAP_ERS_ALT_2__'
+         PATH_ALTI_in = rootpath+'ers-1-reaper/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ER1'
 
     if mission.lower() in ['ers2']:
-         PATH_ALTI_in = rootpath+'ers-2-reaper/YYYY/???/E2_REAP_ERS_ALT_2__YYYYMM*.NC'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-ERS-2-'
+         else: 
+             tag2='E2_REAP_ERS_ALT_2__'
+         PATH_ALTI_in = rootpath+'ers-2-reaper/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ER2'
 
     if mission.lower() in ['envisat']:
-         PATH_ALTI_in =rootpath+'envisat-v3/YYYY/???/ENV_RA_2_MWS____YYYYMM*.nc' 
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Envisat-'
+         else: 
+             tag2='ENV_RA_2_MWS____'
+         PATH_ALTI_in = rootpath+'envisat-v3/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ENV'
 
     if mission.lower() in ['tp-topex']:
-         PATH_ALTI_in = rootpath+'topexf_topex_a/YYYY/???/TP_GPN_2P?????_???_YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'topexf_topex_b/YYYY/???/TP_GPN_2P?????_???_YYYYMM*.nc'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Topex-Poseidon-'
+         else: 
+             tag2='TP_GPN_2P?????_???_'
+         PATH_ALTI_in = rootpath+'topexf_topex_a/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'topexf_topex_b/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'TPT'
 
     if mission.lower() in ['jason1']:
@@ -169,8 +185,12 @@ def  alti_paths_cci(mission,version='1hz')  :
          TAG_ALTI=tag1+'S3B'    
 
     if mission.lower() in ['sentinel6a']:
-         PATH_ALTI_in = rootpath+'sentinel-6_a_f08/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6'
-         PATH_ALTI_ii = rootpath+'sentinel-6_a_f09/YYYY/???/S6A_P4_2__LR______YYYYMM*.SEN6'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Sentinel-6_A-'
+         else: 
+             tag2='S6A_P4_2__LR______'
+         PATH_ALTI_in = rootpath+'sentinel-6_a_f08/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'sentinel-6_a_f09/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'S6A'    
     print('path :', PATH_ALTI_in)
     return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI
@@ -256,7 +276,7 @@ def  alti_read_l2lr(mission,filename):
     return ds
     
 ######################  Generic reading of altimeter data: retracked 1Hz parameters
-def  alti_read_l2lr_cci(mission,filename):
+def  alti_read_l2lr_cci(mission,filename,version=''):
     '''
     reads altimeter data (LRM 1Hz only) from file name. 
     The outout is a xarray dataset 
@@ -272,7 +292,6 @@ def  alti_read_l2lr_cci(mission,filename):
     flag1 = 3-np.ma.getdata(S.variables['swh_quality_level'][:])
     timeref= "1981-01-01 00:00:00.0"			# WARNING: this should be read from the attribute of the time variable ... 
 
-
     ds = xr.Dataset(
         {   "swh_1hz": (["time"], swh1),
             "swh_rms": (["time"], rms1),
@@ -285,6 +304,12 @@ def  alti_read_l2lr_cci(mission,filename):
             "reference_time": timeref,
         },
         )
+
+    if version=='l2p':
+       l2paddvars=['ww3_swh','ww3_qkk','swh_denoised','swh_denoised_uncertainty']
+       for addvar in l2paddvars: 
+           thisvar=np.ma.getdata(S.variables[addvar][:])
+           ds=ds.assign({addvar : ((time),thisvar)})
     return ds
 
 ######################  Generic reading of altimeter data: waveforms and 20Hz parameters
@@ -493,7 +518,7 @@ def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,
         if origin=='gdr':
             ds=alti_read_l2lr(mission,filename)
         else:
-          ds=alti_read_l2lr_cci(mission,filename)
+          ds=alti_read_l2lr_cci(mission,filename,version=origin)
     except:
         print('Problem in reading from '+origin+' file:',filename)  
         return ds3,res,count1
