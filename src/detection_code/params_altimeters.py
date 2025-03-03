@@ -111,10 +111,12 @@ def  alti_paths_cci(mission,version='1hz')  :
     if mission.lower() in ['cryosat2']:
          if version=='l2p':
              tag2='ESACCI-SEASTATE-L2P-SWH-CryoSat-2-'
+             PATH_ALTI_in = rootpath+'cryosat-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_ii = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
          else: 
              tag2='CS_LTA__SIR_LRM_1B_'
-         PATH_ALTI_in = rootpath+'cryosat-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_in = rootpath+'cryosat-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_ii = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'CS2'
 
     if mission.lower() in ['ers1']:
@@ -285,14 +287,33 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
     '''
 
     import xarray as xr
-    S = netCDF4.Dataset(filename, 'r')
-    swh1 = np.ma.getdata(S.variables['swh'][:])   
-    rms1  = np.ma.getdata(S.variables['swh_rms'][:])
-    lat1  = np.ma.getdata(S.variables['lat'][:])
-    lon1  = np.ma.getdata(S.variables['lon'][:])
-    time1 = np.ma.getdata(S.variables['time'][:])
-    flag1 = 3-np.ma.getdata(S.variables['swh_quality_level'][:])
-    timeref= "1981-01-01 00:00:00.0"			# WARNING: this should be read from the attribute of the time variable ... 
+    try:
+        # Attempt to open the NetCDF file
+        S = netCDF4.Dataset(filename, 'r')
+        readOK=1
+    except OSError as e:
+        # Handle OSError (such as NetCDF or HDF errors)
+        #logging.error(f"################# Failed to open {file_path}: {str(e)}")
+        print(f"################# Failed to open {filename}: {str(e)}")
+        readOK=0
+        return readOK,[]
+
+    if ('swh' in S.variables) and ('lon' in S.variables):
+        try:
+            swh1 = np.ma.getdata(S.variables['swh'][:])   
+            rms1  = np.ma.getdata(S.variables['swh_rms'][:])
+            lat1  = np.ma.getdata(S.variables['lat'][:])
+            lon1  = np.ma.getdata(S.variables['lon'][:])
+            time1 = np.ma.getdata(S.variables['time'][:])
+            flag1 = 3-np.ma.getdata(S.variables['swh_quality_level'][:])
+            timeref= "1981-01-01 00:00:00.0"			# WARNING: this should be read from the attribute of the time variable ... 
+        except (OSError, RuntimeError) as e:
+            readOK=0
+            return readOK,[]
+    else: 
+        readOK=0
+        print('################# ',filename,' only has these vars:',S.variables)
+        return readOK,[]
 
     ds = xr.Dataset(
         {   "swh_1hz": (["time"], swh1),
@@ -317,11 +338,23 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
        ds = ds.rename({'swh_1hz': denoisevar})
        l2paddvars=['ww3_hs','ww3_qkk',denoisevar,denoiseunc,'era5wave_swh']
        for addvar in l2paddvars: 
-           thisvar=np.ma.getdata(S.variables[addvar][:])
-           ds=ds.assign({addvar : (('time'),thisvar)})
+           if (addvar in S.variables):
+               try:
+                   thisvar=np.ma.getdata(S.variables[addvar][:])
+                   ds=ds.assign({addvar : (('time'),thisvar)})
+               except (OSError, RuntimeError) as e:
+                   readOK=0
+                   return readOK,[]
+
+           else: 
+               readOK=0
+               print((addvar in S.variables),'################# Failed to read ',addvar,'in ',filename)
+               return readOK,ds
+
        ds = ds.rename({denoisevar: 'swh_1hz'})
        ds = ds.rename({denoiseunc: 'swh_denoised_uncertainty'})
-    return ds
+       ds = ds.assign({'swh_noisy' : (('time'),swh1)})
+    return readOK,ds
 
 ######################  Generic reading of altimeter data: waveforms and 20Hz parameters
 def  alti_read_l2hrw(mission,filename):
@@ -524,15 +557,13 @@ def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,
     res=[]
     ds3=[]
     count1=count0
-    ds=alti_read_l2lr_cci(mission,filename,version=origin)
-#    try:
-#        if origin=='gdr':
-#            ds=alti_read_l2lr(mission,filename)
-#        else:
-#          ds=alti_read_l2lr_cci(mission,filename,version=origin)
-#    except:
-#        print('Problem in reading from '+origin+' file:',filename)  
-#        return ds3,res,count1
+    if origin=='gdr':
+        ds=alti_read_l2lr(mission,filename)
+    else:
+        readOK,ds=alti_read_l2lr_cci(mission,filename,version=origin)
+    if (readOK==0): 
+        print('Problem in reading from '+origin+' file:',filename)  
+        return ds3,res,count1
    
     #inds=np.where(flag1 > 0)[0]
 #   First step: finds points above threshold 
