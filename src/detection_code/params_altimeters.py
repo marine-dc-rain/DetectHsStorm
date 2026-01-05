@@ -94,7 +94,8 @@ def  alti_paths_cci(mission,version='1hz')  :
     PATH_ALTI_in=''
     PATH_ALTI_ii=''
     if version=='l2p':
-       rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
+       #rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
+       rootpath='/home/ref-cersat-public/ocean-waves/cci-seastate/v4/data/satellite/altimeter/l2p/'
        tag1='CCI_l2p_v4_'
     else:
        rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/1hz/'
@@ -104,18 +105,18 @@ def  alti_paths_cci(mission,version='1hz')  :
              tag2='ESACCI-SEASTATE-L2P-SWH-SARAL-'
          else: 
              tag2='CS_LTA__SIR_LRM_1B_'
-         PATH_ALTI_in = rootpath+'saralt/YYYY/???/'+tag2+'YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'saralf/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'saral/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'saral/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'SAR'
 
     if mission.lower() in ['cryosat2']:
          if version=='l2p':
              tag2='ESACCI-SEASTATE-L2P-SWH-CryoSat-2-'
-             PATH_ALTI_in = rootpath+'cryosat-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
-             PATH_ALTI_ii = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_in = rootpath+'cryosat-2/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_ii = rootpath+'cryosat-2/YYYY/???/'+tag2+'YYYYMM*.nc'
          else: 
              tag2='CS_LTA__SIR_LRM_1B_'
-             PATH_ALTI_in = rootpath+'cryosat-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
+             PATH_ALTI_in = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
              PATH_ALTI_ii = rootpath+'cryosat-2e/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'CS2'
 
@@ -125,6 +126,7 @@ def  alti_paths_cci(mission,version='1hz')  :
          else: 
              tag2='E1_REAP_ERS_ALT_2__'
          PATH_ALTI_in = rootpath+'ers-1-reaper/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'ers-1/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ER1'
 
     if mission.lower() in ['ers2']:
@@ -133,6 +135,7 @@ def  alti_paths_cci(mission,version='1hz')  :
          else: 
              tag2='E2_REAP_ERS_ALT_2__'
          PATH_ALTI_in = rootpath+'ers-2-reaper/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'ers-2/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ER2'
 
     if mission.lower() in ['envisat']:
@@ -141,6 +144,7 @@ def  alti_paths_cci(mission,version='1hz')  :
          else: 
              tag2='ENV_RA_2_MWS____'
          PATH_ALTI_in = rootpath+'envisat-v3/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'envisat/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'ENV'
 
     if mission.lower() in ['tp-topex']:
@@ -149,7 +153,8 @@ def  alti_paths_cci(mission,version='1hz')  :
          else: 
              tag2='TP_GPN_2P?????_???_'
          PATH_ALTI_in = rootpath+'topexf_topex_a/YYYY/???/'+tag2+'YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'topexf_topex_b/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'topex-poseidon/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'topex-poseidon/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'TPT'
 
     if mission.lower() in ['jason1']:
@@ -157,7 +162,7 @@ def  alti_paths_cci(mission,version='1hz')  :
              tag2='ESACCI-SEASTATE-L2P-SWH-Jason-1-'
          else: 
              tag2='JA1_GPS_2P?????_???_'
-         PATH_ALTI_in = rootpath+'jason-1e/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'jason-1/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA1'    
     if mission.lower() in ['jason2']:
          #PATH_ALTI_in = '/home/datawork-cersat-public/provider/cci_seastate/products/v3/data/satellite/altimeter/l2_20Hz/l2/jason-2/YYYY/????/JA2_???_2P?????_???_YYYYMM*.nc'
@@ -165,7 +170,8 @@ def  alti_paths_cci(mission,version='1hz')  :
              tag2='ESACCI-SEASTATE-L2P-SWH-Jason-2-'
          else: 
              tag2='JA2_GPS_2P?????_???_'
-         PATH_ALTI_in = rootpath+'jason-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
+#         PATH_ALTI_in = rootpath+'jason-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'jason-2/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA2'    
 
     if mission.lower() in ['jason3']:
@@ -174,16 +180,23 @@ def  alti_paths_cci(mission,version='1hz')  :
          else: 
              tag2='JA3_GPS_2P?????_???_'
          PATH_ALTI_in = rootpath+'jason-3d/YYYY/???/'+tag2+'YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'jason-3f/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'jason-3/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'JA3'    
 
     if mission.lower() in ['sentinel3a']:
-         PATH_ALTI_in = rootpath+'sentinel-3_a_005/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-YYYYMM*.nc'
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-'
+         else:
+             tag2='S3A_P4_2__LR______'
+         PATH_ALTI_in = rootpath+'sentinel-3_a/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-YYYYMM*.nc'
          TAG_ALTI=tag1+'S3A'    
 
     if mission.lower() in ['sentinel3b']:
-         PATH_ALTI_in = rootpath+'sentinel-3_b_005/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-YYYYMM*.nc'
-         TAG_ALTI=tag1+'S3A'    
+         if version=='l2p':
+             tag2='ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-'
+         else:
+             tag2='S3B_P4_2__LR______'
+         PATH_ALTI_in = rootpath+'sentinel-3_b/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-YYYYMM*.nc'
          TAG_ALTI=tag1+'S3B'    
 
     if mission.lower() in ['sentinel6a']:
@@ -191,8 +204,8 @@ def  alti_paths_cci(mission,version='1hz')  :
              tag2='ESACCI-SEASTATE-L2P-SWH-Sentinel-6_A-'
          else: 
              tag2='S6A_P4_2__LR______'
-         PATH_ALTI_in = rootpath+'sentinel-6_a_f08/YYYY/???/'+tag2+'YYYYMM*.nc'
-         PATH_ALTI_ii = rootpath+'sentinel-6_a_f09/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_in = rootpath+'sentinel-6_a/YYYY/???/'+tag2+'YYYYMM*.nc'
+         PATH_ALTI_ii = rootpath+'sentinel-6/YYYY/???/'+tag2+'YYYYMM*.nc'
          TAG_ALTI=tag1+'S6A'    
     print('path :', PATH_ALTI_in)
     return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI
@@ -334,9 +347,10 @@ def  alti_read_l2lr_cci(mission,filename,version=''):
           denoiseunc='swh_corrected_denoised_uncertainty'
        else:
           denoisevar='swh_denoised'
-          denoiseunc='swh_denoised_uncertainty'
+          denoiseunc='swh_uncertainty'
        ds = ds.rename({'swh_1hz': denoisevar})
        l2paddvars=['ww3_hs','ww3_qkk',denoisevar,denoiseunc,'era5wave_swh']
+       l2paddvars=['ww3_swh','ww3_wavenumber_peakdness',denoisevar,denoiseunc,'era5_swh','swh_rms','swh_numval']
        for addvar in l2paddvars: 
            if (addvar in S.variables):
                try:
@@ -567,9 +581,9 @@ def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,
    
     #inds=np.where(flag1 > 0)[0]
 #   First step: finds points above threshold 
-    inds=np.where((ds.swh_1hz > hs_thresh) & (ds.flag_1hz ==0 ))[0]
     indb=np.where((ds.swh_1hz > 1000.) | (ds.flag_1hz > 0 ))[0]
     ds.swh_1hz[indb]=0.
+    inds=np.where((ds.swh_1hz > hs_thresh) & (ds.flag_1hz ==0 ))[0]
     if len(inds > min_len):
        #print('count0:',count0,'INDS:',inds) 
        to_save = np.zeros_like(ds['swh_1hz'].data,dtype='int')-100

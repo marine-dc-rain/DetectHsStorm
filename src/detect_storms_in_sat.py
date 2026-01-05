@@ -87,7 +87,7 @@ class StormDetectionTracking:
 			    filenamei = PATH_ALTI_ii.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
 			    file_listi = sorted(glob.glob(filenamei))
 			    nfilei=len(file_listi) 
-			    if nfilei > nfile: 
+			    if nfilei >= nfile: 
 			        nfile=nfilei
 			        file_list=file_listi
 			   

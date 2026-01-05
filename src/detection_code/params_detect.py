@@ -1,8 +1,8 @@
 import numpy as np
 
 Nb_CPU = 1
-isWW3 = 1
-isERA = 0
+isWW3 = 0
+isERA = 1
 isERAc = 0
 if isWW3==1:
 	# PATH = '/home/datawork-WW3/HINDCAST/GLOBMULTI_ERA5_GLOBCUR_01/GLOB-30M/'
@@ -18,7 +18,7 @@ if isWW3==1:
 	# PATH_SAVE_detect = '/home1/datawork/mdecarlo/TBH_Model/WW3_LOPS/detect/'
 	# PATH_SAVE_tracking = '/home1/datawork/mdecarlo/TBH_Model/WW3_LOPS/tracking/'
 	PATH_SAVE_detect = '/home1/datahome/ardhuin/detect_V3'
-	PATH_SAVE_tracking = '/home1/datahome/ardhuin/tracking_V3'
+	PATH_SAVE_tracking = '/home1/datahome/ardhuin/tracking_V3b'
 	addvarlist=[] #
 	addvarlist=['dir','t0m1','fp','spr','uwnd','vwnd']
 	# PATH_SAVE_detect = '/home/mdecarlo/Documents/PROJETS/TBH_Tempetes_bdd_historique/Storms_src/output/detect'
