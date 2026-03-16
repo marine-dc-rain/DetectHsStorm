@@ -14,9 +14,11 @@ import xarray as xr
 import multiprocessing as mp
 
 from detection_code.storms_functions_io import py_files, read_WW3_HS_file, read_ERA5_HS_file
-from detection_code.storms_functions_detect import get_storm_from_model_by_timestep
-from detection_code.storms_functions_tracking import track_for_1_file,track_for_1_transition
+
 import detection_code.params_detect as cte
+import detection_code.params_altimeters as alti
+from detection_code.params_altimeters import get_storm_by_file
+
 
 logbook.StreamHandler(sys.stdout).push_application()
 log = logbook.Logger('StormAnalysis ')
@@ -59,11 +61,17 @@ class StormDetectionTracking:
 			Nb_CPU = mp.cpu_count()
 		else:
 			Nb_CPU = cte.Nb_CPU 
+		if (self._args.origin=='gdr'):
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_GDR(self._args.mission)
+		if (self._args.origin=='cci'):
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_cci(self._args.mission)
+		if (self._args.origin=='l2p'):
+		    PATH_ALTI_in,PATH_ALTI_ii,TAG_ALTI=alti.alti_paths_cci(self._args.mission,version='l2p')
 		for mm,yy in months_years:
+			count = 0
 			dt_mes0 = datetime.now() 
-			filename = cte.FORMAT_IN.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
-			filepath = cte.PATH.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
-			_filesave = cte.FORMAT_OUT_detect.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			filename = PATH_ALTI_in.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			_filesave = alti.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}').replace('ALT',TAG_ALTI)
 			filesave = os.path.join(cte.PATH_SAVE_detect,_filesave)
 			if os.path.isfile(filesave):
 				if (args.reprocess == True):
@@ -72,32 +80,42 @@ class StormDetectionTracking:
 				else:
 					log.info("file already exists and no reprocessing => skipping file \n %s"% filesave)
 					continue
-			if 'DD' in cte.FORMAT_IN:
-				# --- stored day by day ----
-				root = os.path.dirname(os.path.join(cte.PATH,filename))
-				list_files = list(py_files(root,suffix='.nc'))
-				ds = read_ERA5_HS_file(list_files)
-			else:
-				ds = read_WW3_HS_file(cte.PATH,filename)
-			if ismp:
-				pool = mp.Pool(Nb_CPU)
-				results = pool.starmap_async(get_storm_from_model_by_timestep, [(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio) for it in range(ds.sizes['time'])]).get()
-				pool.close()
-				r_xr = xr.concat(results,dim='x').sortby('time')
-			else:
-				results = []
-				for it in range(ds.sizes['time']):
-					_results = get_storm_from_model_by_timestep(ds.isel(time=it), cte.levels, cte.amp_thresh, cte.min_area, cte.area_forgotten_ratio)
-					results.append(_results)
-					if it%25 == 0:
-						log.info(' -- it = '+str(it)+' over '+str(ds.sizes['time']))
-				r_xr = xr.concat(results,dim='x').sortby('time')
-			r_xr.to_netcdf(os.path.join(cte.PATH_SAVE_detect,filesave))
-			dt_mes = datetime.now() - dt_mes0
-			log.info("---- Detection done for  "+_filesave+" time elapsed = "+str(dt_mes))
+			file_list = sorted(glob.glob(filename))
+			nfile=len(file_list) 
+			print('Will look for satellite files with this pattern:',filename,nfile)
+			if (len(PATH_ALTI_ii) > 10): 
+			    filenamei = PATH_ALTI_ii.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}')
+			    file_listi = sorted(glob.glob(filenamei))
+			    nfilei=len(file_listi) 
+			    if nfilei >= nfile: 
+			        nfile=nfilei
+			        file_list=file_listi
+			   
+			#print('TEST:',nfile,filename)
+			if nfile > 0: 
+				if ismp:
+					pool = mp.Pool(Nb_CPU)
+					results = pool.starmap_async(get_storm_by_file, [(self._args.mission,self._args.origin,file_list[it],  yy,mm, alti.hs_thresh,alti.min_length,count0==count) for it in range(nfile) ]).get()
+					pool.close()
+					r_xr = xr.concat(results,dim='x').sortby('time')
+				else:
+					results = []
+					for ifile in range(nfile): 
+						#print('list:',file_list[ifile])
+						#ds = read_WW3_HS_file(filepath,filename)
+						_results,fulltrack,count = get_storm_by_file(self._args.mission,self._args.origin,file_list[ifile], yy,mm, alti.hs_thresh,alti.min_length,count0=count )
+						if (len(_results) >0): 
+							results.append(_results)
+						log.info(' -- ifile = '+str(ifile)+' out of '+str(nfile))
+					if (len(results) >0): 
+						r_xr = xr.concat(results,dim='x').sortby('time')
+				if (len(results) >0): 
+					r_xr.to_netcdf(os.path.join(cte.PATH_SAVE_detect,filesave),unlimited_dims={'x':True})
+				dt_mes = datetime.now() - dt_mes0
+				log.info("---- Detection done for  "+_filesave+" time elapsed = "+str(dt_mes))
 			
 	def check_detected_exists(self,months_years,args):
-		list_needed = [cte.FORMAT_OUT_detect.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}') for mm,yy in months_years]
+		list_needed = [cte.FORMAT_OUT_detalt.replace('YYYY',f'{yy:04d}').replace('MM',f'{mm:02d}') for mm,yy in months_years]
 		list_exists = os.listdir(cte.PATH_SAVE_detect)
 		need_in_exist = np.isin(list_needed,list_exists)
 		
@@ -216,7 +234,7 @@ class StormDetectionTracking:
 		'''
 		Remember the different steps :
 			detect_only = 0
-			tracking_only = 1
+			pairing_only = 1
 			track_transition_only = 2
 			all_from_tracking = 11 # steps  1 + 2
 			all_from_detect = 111 # steps 0 + 1 + 2
@@ -262,6 +280,9 @@ class StormDetectionTracking:
 		parser = StormParser(prog="detect_track_storms")#,
 							# usage="%(prog)s [-yyear] [-fyfinal_year] [-mmonth] [-fmfinal_month] [-s'0|1']",
 							# description="%(prog)s v1.1")
+		parser.add_argument("-n","--mission",dest="mission",help="Chose the satellite mission for processing",action="store", default=None, type=str)
+		
+		parser.add_argument("-o","--origin",dest="origin",help="Chose the data source",action="store", default='gdr', type=str)
 		parser.add_argument("-y","--year",dest="year",help="Chose the year for processing",action="store", default=None, type=int)
 		parser.add_argument("-m","--month",dest="month",help="Chose the month for processing",action="store", default=None, type=int)
 		parser.add_argument("-Y","--final_year",dest="final_year",help="Chose the final year to take into account",action="store", default=None, type=int)
@@ -307,7 +328,8 @@ class StormDetectionTracking:
 				final_month = self._args.final_month
 		
 		return year, final_year, month, final_month
-		
+
+########################################"		
 	def main(self):
 		# read the input parameters
 		self._args = self.init_option()
