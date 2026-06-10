@@ -13,6 +13,7 @@ The following packages are needed:
 - xarray
 - netcdf4
 - h5netcdf
+- PyQt5
 
 To use the environment in jupyter :  
 `<whatever_snake> install ipykernel jupyter`  
@@ -21,12 +22,12 @@ To use the environment in jupyter :
 ## To run this code 
 1) Activate your python environment
 2) go to 'src' folder
-3) Update the detection_code/params_detect.py file with your configuration
+3) Update the detection_code/params_detect.py file with your configuration (or the detection_code/params_altimeters.py if working on satellites)
 4) launch the computation by typing (here is an example for applying detection only to January and February 2023):  
   `python detect_storms_in_model.py -s 0 -y 2023 -Y 2023 –m 1 –M 2`
 
 
-## Options to run the code
+## Options to run the code for the model
 ```
 python detect_storms_in_model.py -h
 
@@ -57,3 +58,7 @@ Step option :
 |Detection           | x |   |   |  x  |  x  |    |
 |Internal tracking   |   | x |   |  x  |  x  |  x |
 |Transition tracking |   |   | x |  x  |     |  x |
+
+
+## Options to run the code for the satellite
+The options are similar, with the exception that there is no step for the satellite.
