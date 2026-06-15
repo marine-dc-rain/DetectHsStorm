@@ -141,7 +141,7 @@ class SatStormDetection:
                     ],
                 ).get()
                 pool.close()
-                results = [r[0] for r in results0]
+                results = [r[0] for r in results0 if r is not None]
                 r_xr = xr.concat(results, dim='x').sortby('time')
             else:
                 results = []
@@ -156,7 +156,7 @@ class SatStormDetection:
                         alti.min_length,
                         count0=count,
                     )
-                    if len(_results) > 0:
+                    if _results is not None:
                         results.append(_results)
                     log.info(' -- ifile = ' + str(ifile) + ' out of ' + str(nfile))
                 if len(results) > 0:

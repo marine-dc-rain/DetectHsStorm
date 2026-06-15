@@ -306,7 +306,7 @@ def get_storms_track_from_sat_by_file(
     # def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,plot_output = False, plot_example = False):
     # --- concat [-180: 360] ----
     res = []
-    ds3 = []
+    ds3 = None
     count1 = count0
     if origin == 'gdr':
         ds = alti_read_l2lr(mission, filename)
