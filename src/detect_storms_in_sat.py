@@ -107,7 +107,9 @@ class SatStormDetection:
         if self._args.origin == 'cci':
             PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_cci(self._args.mission)
         if self._args.origin == 'l2p':
-            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_cci(self._args.mission, version='l2p')
+            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_cci(
+                self._args.mission, origin_type='l2p', version=self._args.version
+            )
 
         for mm, yy in months_years:
             count = 0
@@ -268,6 +270,14 @@ class SatStormDetection:
             help="Use multiprocessing to run the code",
             action="store_true",
             default=False,
+        )
+        parser.add_argument(
+            "-v",
+            dest="version",
+            help="CCI version to be used",
+            action="store",
+            default='v5',
+            type=str,
         )
         return parser.parse_args()
 
