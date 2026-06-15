@@ -124,7 +124,7 @@ class SatStormDetection:
                 continue
             if ismp:
                 pool = mp.Pool(Nb_CPU)
-                results = pool.starmap_async(
+                results0 = pool.starmap_async(
                     get_storms_track_from_sat_by_file,
                     [
                         (
@@ -141,11 +141,12 @@ class SatStormDetection:
                     ],
                 ).get()
                 pool.close()
+                results = [r[0] for r in results0]
                 r_xr = xr.concat(results, dim='x').sortby('time')
             else:
                 results = []
                 for ifile, file0 in enumerate(file_list):
-                    _results, fulltrack, count = get_storms_track_from_sat_by_file(
+                    _results, _, count = get_storms_track_from_sat_by_file(
                         self._args.mission,
                         self._args.origin,
                         file0,
