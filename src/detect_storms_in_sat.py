@@ -64,8 +64,9 @@ class SatStormDetection:
             alti.FORMAT_OUT_detalt.replace('YYYY', f'{yy:04d}').replace('MM', f'{mm:02d}').replace('ALT', TAG_ALTI)
         )
         filepathsave = os.path.join(alti.PATH_SAVE_det_sat, _filesave)
+        log.info("file to save %s" % filepathsave)
         if os.path.isfile(filepathsave):
-            if self.args.reprocess == True:
+            if self._args.reprocess == True:
                 os.remove(filepathsave)
                 log.info("file removed for reprocessing %s" % filepathsave)
             else:
