@@ -115,7 +115,7 @@ class SatStormDetection:
             filepathsave, _filesave = self.get_filesave_name(mm, yy, TAG_ALTI)
             if filepathsave == 0:
                 continue
-            file_list, nfile = self.get_list_file_by_month(mm, yy, PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI)
+            file_list, nfile = self.get_list_file_by_month(mm, yy, PATH_ALTI_in, PATH_ALTI_ii)
             # print('TEST:',nfile,filename)
             if nfile == 0:
                 log.info(f"---- No input files found for {TAG_ALTI} on month {mm}/{yy}")
