@@ -321,21 +321,21 @@ class SatStormDetection:
         self._args = self.init_option()
         sats = [
             'cfosat',
-            'cryosat-2',
+            'cryosat2',
             'envisat',
-            'ers-1',
-            'ers-2',
+            'ers1',
+            'ers2',
             'gfo',
-            'jason-1',
-            'jason-2',
-            'jason-3',
+            'jason1',
+            'jason2',
+            'jason3',
             'saral',
-            'sentinel-3_a',
-            'sentinel-3_b',
-            'sentinel-6_a',
+            'sentinel3a',
+            'sentinel3b',
+            'sentinel6a',
             'swot',
-            'topex-poseidon_topex',
-            'topex-poseidon_poseidon',
+            'tp-topex',
+            'tp-poseidon',
         ]
         self._args.mission = sats[self._args.imission]
         year, final_year, month, final_month = (
