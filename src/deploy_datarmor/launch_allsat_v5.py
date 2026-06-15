@@ -19,5 +19,5 @@ sats = [
     'topex-poseidon_topex',
     'topex-poseidon_poseidon',
 ]
-for sat in sats:
-    os.system('qsub -v "Y=' + sat + '"detect_one_sat.pbs')
+for sat, _ in enumerate(sats):
+    os.system('qsub -v "Y=' + str(sat) + '"detect_one_sat.pbs')

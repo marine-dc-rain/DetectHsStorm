@@ -220,11 +220,11 @@ class SatStormDetection:
         parser.add_argument(
             "-n",
             "--mission",
-            dest="mission",
+            dest="imission",
             help="Chose the satellite mission for processing",
             action="store",
             default=None,
-            type=str,
+            type=int,
         )
 
         parser.add_argument(
@@ -307,6 +307,25 @@ class SatStormDetection:
     def main(self):
         # read the input parameters
         self._args = self.init_option()
+        sats = [
+            'cfosat',
+            'cryosat-2',
+            'envisat',
+            'ers-1',
+            'ers-2',
+            'gfo',
+            'jason-1',
+            'jason-2',
+            'jason-3',
+            'saral',
+            'sentinel-3_a',
+            'sentinel-3_b',
+            'sentinel-6_a',
+            'swot',
+            'topex-poseidon_topex',
+            'topex-poseidon_poseidon',
+        ]
+        self._args.mission = sats[self._args.imission]
         year, final_year, month, final_month = (
             self.init_dates()
         )  # needs to have self._args (always after the previous line)
