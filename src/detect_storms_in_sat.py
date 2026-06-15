@@ -179,7 +179,7 @@ class SatStormDetection:
             % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
         )
         log.info("|========================================== ")
-        self.run_detection(months_years, args)
+        self.run_detection(months_years)
         log.info("|============================================ ")
         log.info(
             "|  => Detection from (%s,%s) to (%s,%s) Done ! "
