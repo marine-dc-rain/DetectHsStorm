@@ -99,7 +99,9 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
     PATH_ALTI_ii = ''
     if origin_type == 'l2p':
         if version == 'v5':
-            rootpath = '/home/datawork-cersat-public/provider/cci_seastate/products/v5/data/satellite/l2p-swh/'
+            rootpath = (
+                '/home/datawork-cersat-public/provider/cci_seastate/products/v5/data/satellite/altimeter/l2p-swh/'
+            )
             tag1 = 'CCI_l2p_v5_'
         else:  # 'v4'
             # rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
