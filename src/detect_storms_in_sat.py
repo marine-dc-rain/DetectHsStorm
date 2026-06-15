@@ -141,7 +141,7 @@ class SatStormDetection:
                     ],
                 ).get()
                 pool.close()
-                results = [r[0] for r in results0 if r is not None]
+                results = [r[0] for r in results0 if r[0] is not None]
                 r_xr = xr.concat(results, dim='x').sortby('time')
             else:
                 results = []
