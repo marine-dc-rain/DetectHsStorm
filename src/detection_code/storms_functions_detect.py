@@ -318,9 +318,9 @@ def get_storms_track_from_sat_by_file(
 
     # inds=np.where(flag1 > 0)[0]
     # --  First step: finds points above threshold
-    indb = np.nonzero((ds.swh_1hz > 1000.0) | (ds.flag_1hz > 0))[0]
+    indb = np.nonzero((ds.swh_1hz.values > 1000.0) | (ds.flag_1hz.values > 0))[0]
     ds.swh_1hz[indb] = 0.0
-    inds = np.nonzero((ds.swh_1hz > hs_thresh) & (ds.flag_1hz == 0))[0]
+    inds = np.nonzero((ds.swh_1hz.values > hs_thresh) & (ds.flag_1hz.values == 0))[0]
     if len(inds > min_len):
         # print('count0:',count0,'INDS:',inds)
         to_save = np.zeros_like(ds['swh_1hz'].data, dtype='int') - 100
