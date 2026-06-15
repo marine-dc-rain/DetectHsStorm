@@ -16,7 +16,7 @@ from netCDF4 import Dataset
 import xarray as xr
 
 FORMAT_OUT_detalt = 'ALT_detect_storm_YYYY_MM.nc'
-PATH_SAVE_det_sat = '/home1/datahome/ardhuin/detect_V3'
+PATH_SAVE_det_sat = '/home1/datahome/mdecarlo/TEMPETES/sat_extract_v5'
 hs_thresh = 9.0
 min_length = 10
 

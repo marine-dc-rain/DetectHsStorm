@@ -1,0 +1,9 @@
+#!/bin/csh
+#PBS -q mpi_1 -l select=1:ncpus=28:mpiprocs=28:mem=120G
+#PBS -l walltime=48:00:00
+
+cd $PBS_O_WORKDIR
+
+source /home1/datahome/mdecarlo/.cshrc
+conda activate TF_env
+python3 /home1/datahome/mdecarlo/TEMPETES/DetectHsStorm/src/detect_storms_in_sat.py -o l2p -y 1991 -m 8 -Y 2025 -M 12 --multiprocessing -n $Y   >& /$SCRATCH/detect_storms_sat_${PBS_JOBID}

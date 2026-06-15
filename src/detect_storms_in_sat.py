@@ -88,6 +88,12 @@ class SatStormDetection:
                 file_list = file_listi
         return file_list, nfile
 
+    def get_all_list_files(self, PATH_ALTI_in):
+        filename = PATH_ALTI_in.replace('YYYY', '*').replace('MM*', '')
+        file_list = sorted(glob.glob(filename))
+        nfile = len(file_list)
+        return file_list, nfile
+
     def run_detection(self, months_years):
         ismp = self._args.is_multiproc
         ###
@@ -181,31 +187,31 @@ class SatStormDetection:
         )
         log.info("|=========================================== ")
 
-        if np.size(months_years, 0) > 1:
-            log.info("|========================================== ")
-            log.info(
-                "| Start of tracking transition between files from (%s,%s) to (%s,%s)"
-                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
-            )
-            log.info("|========================================== ")
-            self.run_transition_tracking(months_years, args)
-            log.info("|========================================== ")
-            log.info(
-                "|  => Tracking transition between files from (%s,%s) to (%s,%s) Done ! "
-                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
-            )
-            log.info("|========================================== ")
-        else:
-            if step == StepChoice.all_from_detect:
-                log.error(
-                    'Transition between files can not be run if only one month is to be treated, consider running step 110 instead of 111'
-                )
-            if step == StepChoice.all_from_tracking:
-                log.error(
-                    'Transition between files can not be run if only one month is to be treated, consider running step 1 instead of 11'
-                )
-            else:
-                log.error('Transition between files can not be run if only one month is to be treated')
+        # if np.size(months_years, 0) > 1:
+        #     log.info("|========================================== ")
+        #     log.info(
+        #         "| Start of tracking transition between files from (%s,%s) to (%s,%s)"
+        #         % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+        #     )
+        #     log.info("|========================================== ")
+        #     self.run_transition_tracking(months_years, args)
+        #     log.info("|========================================== ")
+        #     log.info(
+        #         "|  => Tracking transition between files from (%s,%s) to (%s,%s) Done ! "
+        #         % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+        #     )
+        #     log.info("|========================================== ")
+        # else:
+        #     if step == StepChoice.all_from_detect:
+        #         log.error(
+        #             'Transition between files can not be run if only one month is to be treated, consider running step 110 instead of 111'
+        #         )
+        #     if step == StepChoice.all_from_tracking:
+        #         log.error(
+        #             'Transition between files can not be run if only one month is to be treated, consider running step 1 instead of 11'
+        #         )
+        #     else:
+        #         log.error('Transition between files can not be run if only one month is to be treated')
 
     def init_option(self):
         parser = StormParser(prog="detect_storms_in_sat")  # ,
