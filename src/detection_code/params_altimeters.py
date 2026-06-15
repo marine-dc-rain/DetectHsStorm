@@ -93,76 +93,104 @@ def alti_paths_GDR(mission):
 
 
 ######################  Defines paths for CCI files (l2)
-def alti_paths_cci(mission, version='1hz'):
+def alti_paths_cci(mission, origin_type='1hz', version='v5'):
     print('Setting file paths for mission:', mission.lower())
     PATH_ALTI_in = ''
     PATH_ALTI_ii = ''
-    if version == 'l2p':
-        # rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
-        rootpath = '/home/ref-cersat-public/ocean-waves/cci-seastate/v4/data/satellite/altimeter/l2p/'
-        tag1 = 'CCI_l2p_v4_'
+    if origin_type == 'l2p':
+        if version == 'v5':
+            rootpath = '/home/datawork-cersat-public/provider/cci_seastate/products/v5/data/satellite/l2p-swh/'
+            tag1 = 'CCI_l2p_v5_'
+        else:  # 'v4'
+            # rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
+            rootpath = '/home/ref-cersat-public/ocean-waves/cci-seastate/v4/data/satellite/altimeter/l2p/'
+            tag1 = 'CCI_l2p_v4_'
     else:
         rootpath = '/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/1hz/'
         tag1 = 'CCIv4_'
     if mission.lower() in ['saral']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-SARAL-'
         else:
             tag2 = 'CS_LTA__SIR_LRM_1B_'
         PATH_ALTI_in = rootpath + 'saral/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-        PATH_ALTI_ii = rootpath + 'saral/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_ii = ''  # rootpath + 'saral/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'SAR'
 
     if mission.lower() in ['cryosat2']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-CryoSat-2-'
             PATH_ALTI_in = rootpath + 'cryosat-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-            PATH_ALTI_ii = rootpath + 'cryosat-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_ii = ''  # rootpath + 'cryosat-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         else:
             tag2 = 'CS_LTA__SIR_LRM_1B_'
             PATH_ALTI_in = rootpath + 'cryosat-2e/YYYY/???/' + tag2 + 'YYYYMM*.nc'
             PATH_ALTI_ii = rootpath + 'cryosat-2e/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'CS2'
 
+    if mission.lower() in ['cfosat']:
+        if origin_type == 'l2p':
+            tag2 = 'ESACCI-SEASTATE-L2P-SWH-CFOSAT-'
+            PATH_ALTI_in = rootpath + 'cfosat/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_ii = ''  # rootpath + 'cryosat-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+
+        TAG_ALTI = tag1 + 'CFO'
+
     if mission.lower() in ['ers1']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-ERS-1-'
         else:
             tag2 = 'E1_REAP_ERS_ALT_2__'
-        PATH_ALTI_in = rootpath + 'ers-1-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_in = rootpath + 'ers-1-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'ers-1/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ER1'
 
     if mission.lower() in ['ers2']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-ERS-2-'
         else:
             tag2 = 'E2_REAP_ERS_ALT_2__'
-        PATH_ALTI_in = rootpath + 'ers-2-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_in = rootpath + 'ers-2-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'ers-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ER2'
 
     if mission.lower() in ['envisat']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Envisat-'
         else:
             tag2 = 'ENV_RA_2_MWS____'
-        PATH_ALTI_in = rootpath + 'envisat-v3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_in = rootpath + 'envisat-v3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'envisat/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ENV'
 
+    if mission.lower() in ['gfo']:
+        if origin_type == 'l2p':
+            tag2 = 'ESACCI-SEASTATE-L2P-SWH-GFO-'
+            PATH_ALTI_in = rootpath + 'gfo/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        TAG_ALTI = tag1 + 'GFO'
+
     if mission.lower() in ['tp-topex']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Topex-Poseidon-'
         else:
             tag2 = 'TP_GPN_2P?????_???_'
-        PATH_ALTI_in = rootpath + 'topexf_topex_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-        PATH_ALTI_in = rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-        PATH_ALTI_ii = rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+            PATH_ALTI_in = rootpath + 'topexf_topex_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_in = rootpath + 'topex-poseidon_topex/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_ii = ""  # rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'TPT'
 
+    if mission.lower() in ['tp-poseidon']:
+        if origin_type == 'l2p':
+            tag2 = 'ESACCI-SEASTATE-L2P-SWH-Topex-Poseidon-'
+        else:
+            tag2 = 'TP_GPN_2P?????_???_'
+            PATH_ALTI_in = rootpath + 'topexf_topex_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_in = rootpath + 'topex-poseidon_poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_ii = ""  # rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        TAG_ALTI = tag1 + 'TPP'
+
     if mission.lower() in ['jason1']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Jason-1-'
         else:
             tag2 = 'JA1_GPS_2P?????_???_'
@@ -170,7 +198,7 @@ def alti_paths_cci(mission, version='1hz'):
         TAG_ALTI = tag1 + 'JA1'
     if mission.lower() in ['jason2']:
         # PATH_ALTI_in = '/home/datawork-cersat-public/provider/cci_seastate/products/v3/data/satellite/altimeter/l2_20Hz/l2/jason-2/YYYY/????/JA2_???_2P?????_???_YYYYMM*.nc'
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Jason-2-'
         else:
             tag2 = 'JA2_GPS_2P?????_???_'
@@ -179,37 +207,44 @@ def alti_paths_cci(mission, version='1hz'):
         TAG_ALTI = tag1 + 'JA2'
 
     if mission.lower() in ['jason3']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Jason-3-'
         else:
             tag2 = 'JA3_GPS_2P?????_???_'
-        PATH_ALTI_in = rootpath + 'jason-3d/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-        PATH_ALTI_ii = rootpath + 'jason-3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_in = rootpath + 'jason-3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_ii = ""  # rootpath + 'jason-3d/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'JA3'
 
     if mission.lower() in ['sentinel3a']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-'
         else:
             tag2 = 'S3A_P4_2__LR______'
-        PATH_ALTI_in = rootpath + 'sentinel-3_a/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_A-YYYYMM*.nc'
+        PATH_ALTI_in = rootpath + 'sentinel-3_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S3A'
 
     if mission.lower() in ['sentinel3b']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-'
         else:
             tag2 = 'S3B_P4_2__LR______'
-        PATH_ALTI_in = rootpath + 'sentinel-3_b/YYYY/???/ESACCI-SEASTATE-L2P-SWH-Sentinel-3_B-YYYYMM*.nc'
+        PATH_ALTI_in = rootpath + 'sentinel-3_b/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S3B'
 
     if mission.lower() in ['sentinel6a']:
-        if version == 'l2p':
+        if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-Sentinel-6_A-'
         else:
             tag2 = 'S6A_P4_2__LR______'
         PATH_ALTI_in = rootpath + 'sentinel-6_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
-        PATH_ALTI_ii = rootpath + 'sentinel-6/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        PATH_ALTI_ii = ""  # rootpath + 'sentinel-6/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S6A'
+
+    if mission.lower() in ['swot']:
+        if origin_type == 'l2p':
+            tag2 = 'ESACCI-SEASTATE-L2P-SWH-SWOT-'
+        PATH_ALTI_in = rootpath + 'swot/YYYY/???/' + tag2 + 'YYYYMM*.nc'
+        TAG_ALTI = tag1 + 'SWO'
+
     print('path :', PATH_ALTI_in)
     return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI

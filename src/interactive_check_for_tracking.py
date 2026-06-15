@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import xarray as xr
 
@@ -45,7 +46,7 @@ class StormEditor(QMainWindow):
 
     def __init__(self, swh_file, storm_file):
         super().__init__()
-
+        self.storm_file = storm_file
         # Load datasets
         self.ds_swh = xr.open_dataset(swh_file)
         self.ds_storm = xr.open_dataset(storm_file)
@@ -338,7 +339,12 @@ class StormEditor(QMainWindow):
 
     # ---------------------------
     def save(self):
-        fname, _ = QFileDialog.getSaveFileName(self, "Save file", "", "*.nc")
+        fname, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save file",
+            self.storm_file.replace('_checked.nc', '.nc').replace('.nc', '_checked.nc'),
+            "*.nc",
+        )
         if not fname:
             return
 
@@ -365,7 +371,10 @@ if __name__ == "__main__":
         '/home/mdecarlo/Documents/perso/ifremer/Sauvegarde_MDC/Documents/Documents/PROJETS/TBH_Tempetes_bdd_historique/'
     )
     swh_file = path + 'LOPS_WW3-GLOB-30M_199301.nc'
-    storm_file = path + 'Model/New_detect/WW3/tracking/transi/tracking_1993_01_xr.nc'
+
+    path2 = '/home/mdecarlo/Documents/Projets/CCI_SeaState/DATA_V4'
+    # storm_file = path + 'Model/New_detect/WW3/tracking/transi/tracking_1993_01_xr.nc'
+    storm_file = os.path.join(path2, 'WW3_tracking_storm_1993_01.nc')
 
     app = QApplication(sys.argv)
     window = StormEditor(swh_file, storm_file)
