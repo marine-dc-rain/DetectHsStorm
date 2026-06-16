@@ -143,7 +143,10 @@ class SatStormDetection:
                 ).get()
                 pool.close()
                 results = [r[0] for r in results0 if r[0] is not None]
-                r_xr = xr.concat(results, dim='x').sortby('time')
+                if len(results) > 0:
+                    r_xr = xr.concat(results, dim='x').sortby('time')
+                else:
+                    log.info(f"No results (above thresh) for {TAG_ALTI} on month {mm}/{yy}")
             else:
                 results = []
                 for ifile, file0 in enumerate(file_list):
@@ -321,21 +324,21 @@ class SatStormDetection:
         self._args = self.init_option()
         sats = [
             'cfosat',
-            'cryosat2',
+            'cryosat2',  # 1
             'envisat',
-            'ers1',
-            'ers2',
+            'ers1',  # 3
+            'ers2',  # 4
             'gfo',
-            'jason1',
-            'jason2',
-            'jason3',
+            'jason1',  # 6
+            'jason2',  # 7
+            'jason3',  # 8
             'saral',
-            'sentinel3a',
-            'sentinel3b',
-            'sentinel6a',
+            'sentinel3a',  # 10
+            'sentinel3b',  # 11
+            'sentinel6a',  # 12
             'swot',
-            'tp-topex',
-            'tp-poseidon',
+            'tp-topex',  # 14
+            'tp-poseidon',  # 15
         ]
         self._args.mission = sats[self._args.imission]
         year, final_year, month, final_month = (
