@@ -27,11 +27,12 @@ log = logbook.Logger('StormAnalysis ')
 
 class StepChoice(IntEnum):
     detect_only = 0
-    tracking_only = 1
-    track_transition_only = 2
-    all_from_tracking = 11  # steps  1 + 2
-    all_from_detect = 111  # steps 0 + 1 + 2
-    all_upto_transition = 110
+    concat = 1
+    # tracking_only = 1
+    # track_transition_only = 2
+    # all_from_tracking = 11  # steps  1 + 2
+    # all_from_detect = 111  # steps 0 + 1 + 2
+    # all_upto_transition = 110
 
 
 class StormParser(ArgumentParser):
@@ -170,8 +171,57 @@ class SatStormDetection:
             dt_mes = datetime.now() - dt_mes0
             log.info("---- Detection done for  " + _filesave + " time elapsed = " + str(dt_mes))
 
-    def concat_month_files(self, months_years):
-        self._args
+    def concat_month_files(self):
+        if self._args.origin == 'gdr':
+            _, _, TAG_ALTI = alti.alti_paths_GDR(self._args.mission)
+        if self._args.origin == 'cci':
+            _, _, TAG_ALTI = alti.alti_paths_cci(self._args.mission)
+        if self._args.origin == 'l2p':
+            _, _, TAG_ALTI = alti.alti_paths_cci(self._args.mission, origin_type='l2p', version=self._args.version)
+        _filesave = (
+            alti.FORMAT_OUT_detalt.replace('YYYY', '*').replace('MM', '*').replace('**', '*').replace('ALT', TAG_ALTI)
+        )
+        filepathsaved = os.path.join(alti.PATH_SAVE_det_sat, _filesave)
+        list_files = glob.glob(filepathsaved)
+
+        list_files.sort()
+        ds = xr.open_mfdataset(list_files, combine='nested', concat_dim='x')
+        ds.time.values = np.array(ds.time, dtype='timedelta64[s]') + pd.Timestamp(str(ds.reference_time.values[()]))
+        segs = ds.segments.values
+        ind = np.nonzero((segs[0:-1] == -100) & (segs[1:] != -100))[0]
+        ind = np.concatenate([np.array([-1]), ind, np.array([len(segs) - 1])])
+        size_rep = np.diff(ind)
+        new_segs = np.repeat(np.arange(len(ind) - 1), size_rep)
+        ds = ds.assign(segments=ds.segments.copy(data=new_segs))
+        ds = ds.assign(sat=(['x'], np.full(ds.sizes['x'], TAG_ALTI)))
+
+        # ----
+        _filename = (
+            alti.FORMAT_OUT_detalt_summary.replace('T1', str(int(ds.yearmonth.values[0])))
+            .replace('T2', str(int(ds.yearmonth.values[-1])))
+            .replace('ALT', TAG_ALTI)
+            .replace('TYPE', 'all')
+        )
+        filesaveall = os.path.join(alti.PATH_SAVE_summary_sat, _filename)
+        ds.to_netcdf(filesaveall)
+        log.info(f'Save concatenated file with entire tracks for {filesaveall}')
+
+        # ----
+        def sat_by_storm(ds):
+            ind = np.argmax(ds.swh_1hz.values)
+            return ds.isel(x=ind)
+
+        ds_sat_bystorm = ds.groupby('segments').map(sat_by_storm)
+        ds_sat_bystorm = ds_sat_bystorm.rename({'segments': 'numStorm'})
+        _filename = (
+            alti.FORMAT_OUT_detalt_summary.replace('T1', str(int(ds.yearmonth.values[0])))
+            .replace('T2', str(int(ds.yearmonth.values[-1])))
+            .replace('ALT', TAG_ALTI)
+            .replace('TYPE', 'max')
+        )
+        filesaveall = os.path.join(alti.PATH_SAVE_summary_sat, _filename)
+        ds_sat_bystorm.to_netcdf(filesaveall)
+        log.info(f'Save concatenated file with max for segemnts tracks for {filesaveall}')
 
     def process(self, months_years, args, step=StepChoice.all_from_detect):
         '''
@@ -179,21 +229,34 @@ class SatStormDetection:
         '''
         self.check_path(cte.PATH_SAVE_detect)
         self.check_path(cte.PATH_SAVE_tracking)
-
-        log.info("|========================================== ")
-        log.info(
-            "| Start of detection from (%s,%s) to (%s,%s)"
-            % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
-        )
-        log.info("|========================================== ")
-        self.run_detection(months_years)
-        log.info("|============================================ ")
-        log.info(
-            "|  => Detection from (%s,%s) to (%s,%s) Done ! "
-            % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
-        )
-        log.info("|=========================================== ")
-
+        if step == 0:
+            log.info("|========================================== ")
+            log.info(
+                "| Start of detection from (%s,%s) to (%s,%s)"
+                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+            )
+            log.info("|========================================== ")
+            self.run_detection(months_years)
+            log.info("|============================================ ")
+            log.info(
+                "|  => Detection from (%s,%s) to (%s,%s) Done ! "
+                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+            )
+            log.info("|=========================================== ")
+        elif step == 1:
+            log.info("|========================================== ")
+            log.info(
+                "| Start of concatenation from (%s,%s) to (%s,%s)"
+                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+            )
+            log.info("|========================================== ")
+            self.concat_month_files(months_years)
+            log.info("|============================================ ")
+            log.info(
+                "|  => Concatenation from (%s,%s) to (%s,%s) Done ! "
+                % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
+            )
+            log.info("|=========================================== ")
         # if np.size(months_years, 0) > 1:
         #     log.info("|========================================== ")
         #     log.info(
@@ -236,6 +299,16 @@ class SatStormDetection:
 
         parser.add_argument(
             "-o", "--origin", dest="origin", help="Chose the data source", action="store", default='gdr', type=str
+        )
+        parser.add_argument(
+            "-s",
+            "--step",
+            dest="step",
+            help="Choose the step for applying the calculation process. 0: detect_only | 1: concatenate over months ",
+            action="store",
+            default=0,
+            type=int,
+            choices=[i.value for i in StepChoice.__iter__()],
         )
         parser.add_argument(
             "-y", "--year", dest="year", help="Chose the year for processing", action="store", default=None, type=int

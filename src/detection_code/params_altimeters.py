@@ -16,7 +16,9 @@ from netCDF4 import Dataset
 import xarray as xr
 
 FORMAT_OUT_detalt = 'ALT_detect_storm_YYYY_MM.nc'
+FORMAT_OUT_detalt_summary = 'ALT_detect_storm_T1_T2_TYPE.nc'
 PATH_SAVE_det_sat = '/home1/datahome/mdecarlo/TEMPETES/sat_extract_v5'
+PATH_SAVE_summary_sat = '/home/datawork-WW3/PROJECT/CCI/STORMS/v5'
 hs_thresh = 9.0
 min_length = 10
 
