@@ -212,7 +212,7 @@ class SatStormDetection:
             return ds.isel(x=ind)
 
         ds_sat_bystorm = ds.groupby('segments').map(sat_by_storm)
-        ds_sat_bystorm = ds_sat_bystorm.rename({'segments': 'numStorm'})
+        ds_sat_bystorm = ds_sat_bystorm.rename_vars({'segments': 'numStorm'}).swap_dims({"segments": "x"})
         _filename = (
             alti.FORMAT_OUT_detalt_summary.replace('T1', str(int(ds.yearmonth.values[0])))
             .replace('T2', str(int(ds.yearmonth.values[-1])))
@@ -223,7 +223,7 @@ class SatStormDetection:
         ds_sat_bystorm.to_netcdf(filesaveall)
         log.info(f'Save concatenated file with max for segemnts tracks for {filesaveall}')
 
-    def process(self, months_years, args, step=StepChoice.all_from_detect):
+    def process(self, months_years, step=StepChoice.detect_only):
         '''
         For sat process only the detection step
         '''
@@ -250,7 +250,7 @@ class SatStormDetection:
                 % (months_years[0][0], months_years[0][1], months_years[-1][0], months_years[-1][1])
             )
             log.info("|========================================== ")
-            self.concat_month_files(months_years)
+            self.concat_month_files()
             log.info("|============================================ ")
             log.info(
                 "|  => Concatenation from (%s,%s) to (%s,%s) Done ! "
@@ -433,7 +433,7 @@ class SatStormDetection:
 
         months_years = self.get_all_months(year, final_year, month, final_month)
         log.info('| ' + str(np.size(months_years, 0)) + ' time steps to be processed ')
-        self.process(months_years, self._args)
+        self.process(months_years, step=self._args.step)
 
 
 def main():
