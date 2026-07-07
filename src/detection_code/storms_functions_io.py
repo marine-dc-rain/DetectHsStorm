@@ -272,6 +272,7 @@ def alti_read_l2lr_cci(mission, filename, version=''):
             'swh_rms',
             'swh_numval',
         ]
+        l2paddvars = list(set(l2paddvars + addvarlist))
         for addvar in l2paddvars:
             if addvar in S.variables:
                 try:

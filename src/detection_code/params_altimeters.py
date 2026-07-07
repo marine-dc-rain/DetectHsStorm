@@ -23,6 +23,21 @@ hs_thresh = 9.0
 min_length = 10
 
 
+addvarlist=['era5_wind_eastward','era5_wind_northwarddir','era5_surface_pressure','swh_with_8m_offset_correction', 
+'swh_with_8m_offset_correction_rms', 'swh_with_8m_offset_correction_numval', 
+'swh_with_8m_offset_correction_quality_level', 'swh_with_8m_offset_correction_rejection_flags',
+'distance_to_coast','bathymetry','ww3_wave_skewness','ww3_mean_wave_period','ww3_wavenumber_peakdness',
+'ww3_emb','ww3_swh','ww3_mean_wave_period_t0m1','ww3_mean_wave_direction','ww3_peak_wave_period']
+
+# l2paddvars = [
+#             'ww3_swh',
+#             'ww3_wavenumber_peakdness',
+#             denoisevar,
+#             denoiseunc,
+#             'era5_swh',
+#             'swh_rms',
+#             'swh_numval',
+#         ]
 ######################  Defines parameters
 def alti_paths_GDR(mission):
 
