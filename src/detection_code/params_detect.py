@@ -39,8 +39,8 @@ if isERA == 1:
     PATH_SAVE_tracking = '/home1/datahome/ardhuin/trackingERA5/'
     addvarlist = ['dir', 't0m1', 'fp']
 
-# filedist2coast = '/home1/datahome/mdecarlo/Python_functions/distance2coast180.nc'
-filedist2coast = '/home/mdecarlo/Documents/code/data_test/distance2coast180.nc'
+filedist2coast = '/home1/datahome/mdecarlo/Python_functions/distance2coast180.nc'
+# filedist2coast = '/home/mdecarlo/Documents/code/data_test/distance2coast180.nc'
 # filedist2coast = '/home1/datahome/ardhuin/DetectHsStorm/src/distance2coast180.nc'
 swh_crit_max = 16.0
 dswh_crit = 0.5
