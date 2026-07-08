@@ -435,7 +435,7 @@ def get_storms_track_from_sat_by_file(
         plt.plot(ds.time.values[ind], swh_flagged[ind], '.r')
 
         plt.grid(True)
-        plt.title(os.path.basename(filename))
+        plt.title(f'{os.path.basename(filename)} , max = {np.nanmax(swh_flagged)}')
         plt.savefig('/home/datawork-WW3/PROJECT/CCI/STORMS/v5/test.png')
         print('Error with file: ' + str(os.path.basename(filename)))
         print(f'{np.__version__=}')
