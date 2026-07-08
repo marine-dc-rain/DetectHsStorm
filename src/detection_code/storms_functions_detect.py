@@ -431,7 +431,8 @@ def get_storms_track_from_sat_by_file(
     except Exception as ex:
         fig_end2 = plt.figure(figsize=(12, 5))
         plt.plot(ds.time.values, ds.swh_1hz.values, 'sk')
-        plt.plot(ds.time.values, swh_flagged, '.r')
+        ind = np.nonzero(swh_flagged >= hs_thresh)[0]
+        plt.plot(ds.time.values[ind], swh_flagged[ind], '.r')
 
         plt.grid(True)
         plt.title(os.path.basename(filename))
