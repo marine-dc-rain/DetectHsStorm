@@ -138,6 +138,10 @@ class SatStormDetection:
                             alti.hs_thresh,
                             alti.min_length,
                             count,
+                            alti.addvarlist,
+                            False,
+                            False,
+                            alti.hs_thresh_min,
                         )
                         for it in range(nfile)
                     ],
@@ -160,6 +164,8 @@ class SatStormDetection:
                         alti.hs_thresh,
                         alti.min_length,
                         count0=count,
+                        addvarlist=alti.addvarlist,
+                        hs_thresh_min=alti.hs_thresh_min,
                     )
                     if _results is not None:
                         results.append(_results)
@@ -221,7 +227,7 @@ class SatStormDetection:
         )
         filesaveall = os.path.join(alti.PATH_SAVE_summary_sat, _filename)
         ds_sat_bystorm.to_netcdf(filesaveall)
-        log.info(f'Save concatenated file with max for segemnts tracks for {filesaveall}')
+        log.info(f'Save concatenated file with max for segments tracks for {filesaveall}')
 
     def process(self, months_years, step=StepChoice.detect_only):
         '''

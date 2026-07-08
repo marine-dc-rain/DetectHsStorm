@@ -300,8 +300,85 @@ def get_storm_from_model_by_timestep(
         return res
 
 
+def get_part_to_save(swh_flagged, count0, min_len=6, hs_thresh=9.0, hs_thresh_min=5.0):
+    inds = np.nonzero((swh_flagged > hs_thresh))[0]
+    n_data = len(swh_flagged)
+
+    if len(inds <= min_len):
+        return None, 0
+
+    inddif = np.diff(inds)
+    endseg = np.append(
+        np.nonzero(inddif > min_len)[0], [len(inds) - 1]
+    )  # select if min dist between segments is min len
+
+    # we cut segments when the differences is bigger than min_len
+    idens_by_seg = np.split(inds, np.nonzero(np.diff(inds) > min_len)[0] + 1)
+    segment_lengths = np.array([len(d) for d in idens_by_seg], dtype=np.int16)
+    # we select segments if they are long enough; if the segment extends
+    # to the latest time we prefer not to select it.
+    ind_segment = np.nonzero((segment_lengths >= min_len))[0]
+    if len(ind_segment) == 0:
+        return None, 0
+    ind_by_seg = [idens_by_seg[i] for i in ind_segment]
+    ind_seg_start = np.array([i[0] for i in ind_by_seg])
+    ind_seg_end = np.array([i[-1] for i in ind_by_seg])
+
+    to_save = np.zeros(n_data, dtype='int') - 100
+    countst = 0
+    # bornes to work on the enlarged zone
+    ind_before1 = 0
+    for iseg, (ind1, ind2, seg) in enumerate(zip(ind_seg_start, ind_seg_end, ind_by_seg)):
+        inds_min = np.nonzero((swh_flagged > hs_thresh_min))[0]
+        if np.sum(np.diff(seg)) < 2 * len(seg):
+            to_save[ind1:ind2] = countst + count0
+            ind_before2 = ind1
+            ind_after1 = ind2
+
+            if ind_before2 >= ind_before1:
+                inds_min_sel_before = inds_min[(inds_min >= ind_before1) & (inds_min <= ind_before2)]
+                last_seg_before = np.split(inds_min_sel_before, np.nonzero(np.diff(inds_min_sel_before) != 1)[0] + 1)[
+                    -1
+                ]
+                to_save[last_seg_before] = countst + count0
+            if iseg == len(ind_seg_end) - 1:  # last
+                ind_after2 = n_data - 1
+            else:
+                ind_after2 = ind_seg_start[iseg + 1]
+
+            if ind_after2 >= ind_after1:
+                inds_min_sel_after = inds_min[(inds_min >= ind_after1) & (inds_min <= ind_after2)]
+
+                first_seg_after = np.split(inds_min_sel_after, np.nonzero(np.diff(inds_min_sel_after) != 1)[0] + 1)[0]
+
+                if (first_seg_after[-1] == ind_after2) & (iseg != len(ind_seg_end) - 1):
+                    # Hs does not go below threshold between 2 peaks
+                    swh_test = swh_flagged[first_seg_after]
+                    imin = np.argmin(swh_test)
+                    first_seg_after = first_seg_after[:imin]
+                ind_before1 = first_seg_after[-1]
+                to_save[first_seg_after] = countst + count0
+            else:
+                ind_before1 = ind_after2
+            countst = countst + 1
+        else:
+            print('too many blank spots')
+    return to_save, countst
+
+
 def get_storms_track_from_sat_by_file(
-    mission, origin, filename, yy, mm, hs_thresh, min_len, count0=0, plot_output=False, plot_example=False
+    mission,
+    origin,
+    filename,
+    yy,
+    mm,
+    hs_thresh,
+    min_len,
+    count0=0,
+    addvarlist=[],
+    plot_output=False,
+    plot_example=False,
+    hs_thresh_min=5,
 ):
     # def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,plot_output = False, plot_example = False):
     # --- concat [-180: 360] ----
@@ -311,60 +388,41 @@ def get_storms_track_from_sat_by_file(
     if origin == 'gdr':
         ds = alti_read_l2lr(mission, filename)
     else:
-        readOK, ds = alti_read_l2lr_cci(mission, filename, version=origin)
+        readOK, ds = alti_read_l2lr_cci(mission, filename, version=origin, addvarlist=addvarlist)
     if readOK == 0:
         print('Problem in reading from ' + origin + ' file:', filename)
         return ds3, res, count1
 
     # inds=np.where(flag1 > 0)[0]
-    # --  First step: finds points above threshold
+    # --  First step: prepare data
     indb = np.nonzero((ds.swh_1hz.values > 1000.0) | (ds.flag_1hz.values > 0))[0]
     ds.swh_1hz[indb] = 0.0
-    inds = np.nonzero((ds.swh_1hz.values > hs_thresh) & (ds.flag_1hz.values == 0))[0]
-    if len(inds > min_len):
-        # print('count0:',count0,'INDS:',inds)
-        to_save = np.zeros_like(ds['swh_1hz'].data, dtype='int') - 100
-        inddif = np.diff(inds)
+    swh_flagged = (ds.swh_1hz.values) * (ds.flag_1hz.values == 0)
 
-        # define indices of segment boundaries
-        endseg = np.append(np.nonzero(inddif > min_len)[0], [len(inds) - 1])
+    # -- apply selection ---
+    to_save, countst = get_part_to_save(
+        swh_flagged, count0, min_len=min_len, hs_thresh=hs_thresh, hs_thresh_min=hs_thresh_min
+    )
 
-        i1 = 0
-        i2 = len(inds) - 1
-        countst = 0
+    if to_save is not None:
+        inds = np.nonzero(to_save > -1)[0]
+        ds3 = ds.assign({'segments': (('time'), to_save)})
+        #    ind3=np.where((ds3.segments > -1 ))[0]
+        print('START:', inds[0], inds[-1], ds.swh_1hz[inds[0]].values, np.max(ds.swh_1hz[inds[:]].values))
+        res = []
+        #    g=ds3.where(ds3.segments>-1.,np.nan).groupby('segments')
+        #    #print('GGG:',g)
+        #    #res = g.map(get_storm_info_from_savemap) #.swap_dims({'time':'x'})
+        ds3 = ds3.isel(time=inds).swap_dims({'time': 'x'})
+        ninds = len(inds)
+        iarr = np.zeros(ninds, dtype='uint') + yy * 100 + mm
+        ds3 = ds3.assign({'yearmonth': (('x'), iarr)})
+        sarr = np.array([filename for _ in range(ninds)], dtype=str)
+        ds3 = ds3.assign({'filename': (('x'), sarr)})
 
-        for iseg in range(len(endseg)):
-            i2 = endseg[iseg]
-            if inds[i2] > inds[i1] + min_len:
-                if np.sum(inddif[i1 : i2 - 1]) < 2 * (i2 - i1):
-                    to_save[inds[i1] : inds[i2]] = countst + count0
-                    countst = countst + 1
-            i1 = i2 + 1
+        ds3 = ds3.assign({'indices_in_file': (('x'), inds)})
 
-        if countst > 0:
-            ds3 = ds.assign({'segments': (('time'), to_save)})
-            #    ind3=np.where((ds3.segments > -1 ))[0]
-            print('START:', inds[0], inds[-1], ds.swh_1hz[inds[0]].values, np.max(ds.swh_1hz[inds[:]].values))
-            res = []
-            #    g=ds3.where(ds3.segments>-1.,np.nan).groupby('segments')
-            #    #print('GGG:',g)
-            #    #res = g.map(get_storm_info_from_savemap) #.swap_dims({'time':'x'})
-            ds3 = ds3.isel(time=inds).swap_dims({'time': 'x'})
-            ninds = len(inds)
-            iarr = np.zeros(ninds, dtype='uint') + yy * 100 + mm
-            ds3 = ds3.assign({'yearmonth': (('x'), iarr)})
-            sarr = np.array([filename for _ in range(ninds)], dtype=str)
-            ds3 = ds3.assign({'filename': (('x'), sarr)})
-
-            ds3 = ds3.assign({'indices_in_file': (('x'), inds)})
-
-            # ds3 = ds3.assign_coords(storms_by_t = xr.full_like(ds3.segments,fill_value=len(g),dtype=int))
-            # print('RES:',res)
-            # res = res.assign_coords(storms_by_t = xr.full_like(res.segments,fill_value=len(g),dtype=int))
-            # print('RES2:',res)
-            # print('DS3:',ds3)
-        count1 = count0 + countst
-
+    count1 = count0 + countst
     # if plot_example:
     # plt.figure()
     # plt.tight_layout()

@@ -200,7 +200,7 @@ def alti_read_l2lr(mission, filename):
 
 
 ######################  Generic reading of altimeter data: retracked 1Hz parameters
-def alti_read_l2lr_cci(mission, filename, version=''):
+def alti_read_l2lr_cci(mission, filename, version='', addvarlist=[]):
     '''
     reads altimeter data (LRM 1Hz only) from file name.
     The outout is a xarray dataset
@@ -283,9 +283,9 @@ def alti_read_l2lr_cci(mission, filename, version=''):
                     return readOK, []
 
             else:
-                readOK = 0
+                # readOK = 0
                 print((addvar in S.variables), '################# Failed to read ', addvar, 'in ', filename)
-                return readOK, ds
+                # return readOK, ds
 
         ds = ds.rename({denoisevar: 'swh_1hz'})
         ds = ds.rename({denoiseunc: 'swh_denoised_uncertainty'})

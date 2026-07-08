@@ -20,14 +20,31 @@ FORMAT_OUT_detalt_summary = 'ALT_detect_storm_T1_T2_TYPE.nc'
 PATH_SAVE_det_sat = '/home1/datahome/mdecarlo/TEMPETES/sat_extract_v5'
 PATH_SAVE_summary_sat = '/home/datawork-WW3/PROJECT/CCI/STORMS/v5'
 hs_thresh = 9.0
+hs_thresh_min = 5.0
 min_length = 10
 
 
-addvarlist=['era5_wind_eastward','era5_wind_northwarddir','era5_surface_pressure','swh_with_8m_offset_correction', 
-'swh_with_8m_offset_correction_rms', 'swh_with_8m_offset_correction_numval', 
-'swh_with_8m_offset_correction_quality_level', 'swh_with_8m_offset_correction_rejection_flags',
-'distance_to_coast','bathymetry','ww3_wave_skewness','ww3_mean_wave_period','ww3_wavenumber_peakdness',
-'ww3_emb','ww3_swh','ww3_mean_wave_period_t0m1','ww3_mean_wave_direction','ww3_peak_wave_period']
+addvarlist = [
+    'era5_wind_eastward',
+    'era5_wind_northward',
+    'era5_surface_pressure',
+    'swh_with_8m_offset_correction',
+    'swh_with_8m_offset_correction_rms',
+    'swh_with_8m_offset_correction_numval',
+    'swh_with_8m_offset_correction_quality_level',
+    'swh_with_8m_offset_correction_rejection_flags',
+    'distance_to_coast',
+    'bathymetry',
+    'ww3_wave_skewness',
+    'ww3_mean_wave_period',
+    'ww3_wavenumber_peakdness',
+    'ww3_emb',
+    'ww3_swh',
+    'ww3_mean_wave_period_t0m1',
+    'ww3_mean_wave_direction',
+    'ww3_peak_wave_period',
+]
+
 
 # l2paddvars = [
 #             'ww3_swh',
