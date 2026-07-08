@@ -5,6 +5,7 @@
 # ==================================================================================
 import os
 import sys
+import traceback
 import numpy as np
 import scipy.ndimage as ndimage
 import scipy.signal as sps
@@ -380,57 +381,63 @@ def get_storms_track_from_sat_by_file(
     plot_example=False,
     hs_thresh_min=5,
 ):
-    # def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,plot_output = False, plot_example = False):
-    # --- concat [-180: 360] ----
-    res = []
-    ds3 = None
-    count1 = count0
-    if origin == 'gdr':
-        ds = alti_read_l2lr(mission, filename)
-    else:
-        readOK, ds = alti_read_l2lr_cci(mission, filename, version=origin, addvarlist=addvarlist)
-    if readOK == 0:
-        print('Problem in reading from ' + origin + ' file:', filename)
-        return ds3, res, count1
-
-    # inds=np.where(flag1 > 0)[0]
-    # --  First step: prepare data
-    indb = np.nonzero((ds.swh_1hz.values > 1000.0) | (ds.flag_1hz.values > 0))[0]
-    ds.swh_1hz[indb] = 0.0
-    swh_flagged = (ds.swh_1hz.values) * (ds.flag_1hz.values == 0)
-
-    # -- apply selection ---
-    to_save, countst = get_part_to_save(
-        swh_flagged, count0, min_len=min_len, hs_thresh=hs_thresh, hs_thresh_min=hs_thresh_min
-    )
-
-    if to_save is not None:
-        inds = np.nonzero(to_save > -1)[0]
-        ds3 = ds.assign({'segments': (('time'), to_save)})
-        #    ind3=np.where((ds3.segments > -1 ))[0]
-        print('START:', inds[0], inds[-1], ds.swh_1hz[inds[0]].values, np.max(ds.swh_1hz[inds[:]].values))
+    try:
+        # def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,plot_output = False, plot_example = False):
+        # --- concat [-180: 360] ----
         res = []
-        #    g=ds3.where(ds3.segments>-1.,np.nan).groupby('segments')
-        #    #print('GGG:',g)
-        #    #res = g.map(get_storm_info_from_savemap) #.swap_dims({'time':'x'})
-        ds3 = ds3.isel(time=inds).swap_dims({'time': 'x'})
-        ninds = len(inds)
-        iarr = np.zeros(ninds, dtype='uint') + yy * 100 + mm
-        ds3 = ds3.assign({'yearmonth': (('x'), iarr)})
-        sarr = np.array([filename for _ in range(ninds)], dtype=str)
-        ds3 = ds3.assign({'filename': (('x'), sarr)})
+        ds3 = None
+        count1 = count0
+        if origin == 'gdr':
+            ds = alti_read_l2lr(mission, filename)
+        else:
+            readOK, ds = alti_read_l2lr_cci(mission, filename, version=origin, addvarlist=addvarlist)
+        if readOK == 0:
+            print('Problem in reading from ' + origin + ' file:', filename)
+            return ds3, res, count1
 
-        ds3 = ds3.assign({'indices_in_file': (('x'), inds)})
+        # inds=np.where(flag1 > 0)[0]
+        # --  First step: prepare data
+        indb = np.nonzero((ds.swh_1hz.values > 1000.0) | (ds.flag_1hz.values > 0))[0]
+        ds.swh_1hz[indb] = 0.0
+        swh_flagged = (ds.swh_1hz.values) * (ds.flag_1hz.values == 0)
 
-    count1 = count0 + countst
-    # if plot_example:
-    # plt.figure()
-    # plt.tight_layout()
-    # fig_end = plt.figure(figsize=(12,5))
-    #        im = plt.pcolormesh(ds3.longitude,ds3.latitude,to_save_intersec,cmap='jet',vmin=-1)
-    #        plt.colorbar(im)
-    #        plt.plot(res.lon_max,res.lat_max,'ow',markeredgecolor='k')
-    #        plt.title('detected regions')
+        # -- apply selection ---
+        to_save, countst = get_part_to_save(
+            swh_flagged, count0, min_len=min_len, hs_thresh=hs_thresh, hs_thresh_min=hs_thresh_min
+        )
+
+        if to_save is not None:
+            inds = np.nonzero(to_save > -1)[0]
+            ds3 = ds.assign({'segments': (('time'), to_save)})
+            #    ind3=np.where((ds3.segments > -1 ))[0]
+            print('START:', inds[0], inds[-1], ds.swh_1hz[inds[0]].values, np.max(ds.swh_1hz[inds[:]].values))
+            res = []
+            #    g=ds3.where(ds3.segments>-1.,np.nan).groupby('segments')
+            #    #print('GGG:',g)
+            #    #res = g.map(get_storm_info_from_savemap) #.swap_dims({'time':'x'})
+            ds3 = ds3.isel(time=inds).swap_dims({'time': 'x'})
+            ninds = len(inds)
+            iarr = np.zeros(ninds, dtype='uint') + yy * 100 + mm
+            ds3 = ds3.assign({'yearmonth': (('x'), iarr)})
+            sarr = np.array([filename for _ in range(ninds)], dtype=str)
+            ds3 = ds3.assign({'filename': (('x'), sarr)})
+
+            ds3 = ds3.assign({'indices_in_file': (('x'), inds)})
+
+        count1 = count0 + countst
+        # if plot_example:
+        # plt.figure()
+        # plt.tight_layout()
+        # fig_end = plt.figure(figsize=(12,5))
+        #        im = plt.pcolormesh(ds3.longitude,ds3.latitude,to_save_intersec,cmap='jet',vmin=-1)
+        #        plt.colorbar(im)
+        #        plt.plot(res.lon_max,res.lat_max,'ow',markeredgecolor='k')
+        #        plt.title('detected regions')
+    except Exception as ex:
+        print('Error with file: ' + str(os.path.basename(filename)))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print(''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+
     if plot_output:
         fig_end2 = plt.figure(figsize=(12, 5))
         #        im = plt.pcolormesh(ds3.longitude,ds3.latitude,dsTot.hs,cmap='jet',vmin=-1)
