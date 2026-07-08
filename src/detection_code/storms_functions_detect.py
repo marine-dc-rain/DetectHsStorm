@@ -430,6 +430,7 @@ def get_storms_track_from_sat_by_file(
         #        plt.title('detected regions')
     except Exception as ex:
         print('Error with file: ' + str(os.path.basename(filename)))
+        print(f'{np.__version__=}')
         print(f'params : {min_len=}, {hs_thresh=}, {hs_thresh_min=}')
         if to_save is not None:
             print(f'{len(to_save)=}, nb to_save above 0 = {np.count_nonzero(to_save > -1)}')
