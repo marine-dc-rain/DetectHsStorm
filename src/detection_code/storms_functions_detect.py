@@ -401,7 +401,7 @@ def get_storms_track_from_sat_by_file(
             swh_flagged, count0, min_len=min_len, hs_thresh=hs_thresh, hs_thresh_min=hs_thresh_min
         )
 
-        if to_save is not None:
+        if (to_save is not None) & (countst > 0):
             inds = np.nonzero(to_save > -1)[0]
             ds3 = ds.assign({'segments': (('time'), to_save)})
             #    ind3=np.where((ds3.segments > -1 ))[0]
@@ -429,17 +429,16 @@ def get_storms_track_from_sat_by_file(
         #        plt.plot(res.lon_max,res.lat_max,'ow',markeredgecolor='k')
         #        plt.title('detected regions')
     except Exception as ex:
-        fig_end2 = plt.figure(figsize=(12, 5))
-        plt.plot(ds.time.values, ds.swh_1hz.values, 'sk')
-        ind = np.nonzero(swh_flagged >= hs_thresh)[0]
-        plt.plot(ds.time.values[ind], swh_flagged[ind], '.r')
-
-        plt.grid(True)
-        print(f' max = {np.nanmax(swh_flagged)}')
-        plt.title(f'{os.path.basename(filename)} , max = {np.nanmax(swh_flagged)}')
-        plt.savefig('/home/datawork-WW3/PROJECT/CCI/STORMS/v5/test.png')
+        # fig_end2 = plt.figure(figsize=(12, 5))
+        # plt.plot(ds.time.values, ds.swh_1hz.values, 'sk')
+        # ind = np.nonzero(swh_flagged >= hs_thresh)[0]
+        # plt.plot(ds.time.values[ind], swh_flagged[ind], '.r')
+        # plt.grid(True)
+        # print(f' max = {np.nanmax(swh_flagged)}')
+        # plt.title(f'{os.path.basename(filename)} , max = {np.nanmax(swh_flagged)}')
+        # plt.savefig('/home/datawork-WW3/PROJECT/CCI/STORMS/v5/test.png')
         print('Error with file: ' + str(os.path.basename(filename)))
-        print(f'{np.__version__=}')
+        # print(f'{np.__version__=}')
         print(f'params : {min_len=}, {hs_thresh=}, {hs_thresh_min=}')
         if to_save is not None:
             print(f'{len(to_save)=}, nb to_save above 0 = {np.count_nonzero(to_save > -1)}')
