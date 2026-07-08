@@ -19,6 +19,7 @@ FORMAT_OUT_detalt = 'ALT_detect_storm_YYYY_MM.nc'
 FORMAT_OUT_detalt_summary = 'ALT_detect_storm_T1_T2_TYPE.nc'
 PATH_SAVE_det_sat = '/home1/datahome/mdecarlo/TEMPETES/sat_extract_v5'
 PATH_SAVE_summary_sat = '/home/datawork-WW3/PROJECT/CCI/STORMS/v5'
+
 hs_thresh = 9.0
 hs_thresh_min = 5.0
 min_length = 10
@@ -28,11 +29,6 @@ addvarlist = [
     'era5_wind_eastward',
     'era5_wind_northward',
     'era5_surface_pressure',
-    'swh_with_8m_offset_correction',
-    'swh_with_8m_offset_correction_rms',
-    'swh_with_8m_offset_correction_numval',
-    'swh_with_8m_offset_correction_quality_level',
-    'swh_with_8m_offset_correction_rejection_flags',
     'distance_to_coast',
     'bathymetry',
     'ww3_wave_skewness',
@@ -43,6 +39,14 @@ addvarlist = [
     'ww3_mean_wave_period_t0m1',
     'ww3_mean_wave_direction',
     'ww3_peak_wave_period',
+]
+
+var_supplist = [
+    'swh_with_8m_offset_correction',
+    'swh_with_8m_offset_correction_rms',
+    'swh_with_8m_offset_correction_numval',
+    'swh_with_8m_offset_correction_quality_level',
+    'swh_with_8m_offset_correction_rejection_flags',
 ]
 
 
@@ -123,7 +127,7 @@ def alti_paths_GDR(mission):
         PATH_ALTI_in = '/home/datawork-cersat-public/provider/aviso/satellite/l2/hy-2a/alt/rs-igdr/data/YYYY/???/H2A_RA1_RDR_2PT_????_????_YYYYMM??_*.nc'
         TAG_ALTI = 'GDR_H2A'
 
-    return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI
+    return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI, []
 
 
 ######################  Defines paths for CCI files (l2)
@@ -136,6 +140,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             rootpath = (
                 '/home/datawork-cersat-public/provider/cci_seastate/products/v5/data/satellite/altimeter/l2p-swh/'
             )
+            rootpath = '/home/mdecarlo/Documents/Projets/CCI_SeaState/DATA/v5/'
             tag1 = 'CCI_l2p_v5_'
         else:  # 'v4'
             # rootpath='/home/datawork-cersat-public/cache/project/cciseastate/data/v4/altimeter/l2p/'
@@ -152,6 +157,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         PATH_ALTI_in = rootpath + 'saral/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_ii = ''  # rootpath + 'saral/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'SAR'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['cryosat2']:
         if origin_type == 'l2p':
@@ -163,6 +169,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             PATH_ALTI_in = rootpath + 'cryosat-2e/YYYY/???/' + tag2 + 'YYYYMM*.nc'
             PATH_ALTI_ii = rootpath + 'cryosat-2e/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'CS2'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['cfosat']:
         if origin_type == 'l2p':
@@ -171,6 +178,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             PATH_ALTI_ii = ''  # rootpath + 'cryosat-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
 
         TAG_ALTI = tag1 + 'CFO'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['ers1']:
         if origin_type == 'l2p':
@@ -180,6 +188,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             PATH_ALTI_in = rootpath + 'ers-1-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'ers-1/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ER1'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['ers2']:
         if origin_type == 'l2p':
@@ -189,6 +198,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             PATH_ALTI_in = rootpath + 'ers-2-reaper/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'ers-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ER2'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['envisat']:
         if origin_type == 'l2p':
@@ -198,12 +208,14 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             PATH_ALTI_in = rootpath + 'envisat-v3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'envisat/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'ENV'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['gfo']:
         if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-GFO-'
             PATH_ALTI_in = rootpath + 'gfo/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'GFO'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['tp-topex']:
         if origin_type == 'l2p':
@@ -214,6 +226,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         PATH_ALTI_in = rootpath + 'topex-poseidon_topex/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_ii = ""  # rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'TPT'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['tp-poseidon']:
         if origin_type == 'l2p':
@@ -224,6 +237,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         PATH_ALTI_in = rootpath + 'topex-poseidon_poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_ii = ""  # rootpath + 'topex-poseidon/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'TPP'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['jason1']:
         if origin_type == 'l2p':
@@ -232,6 +246,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             tag2 = 'JA1_GPS_2P?????_???_'
         PATH_ALTI_in = rootpath + 'jason-1/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'JA1'
+        addvarlist_saved = addvarlist + var_supplist
     if mission.lower() in ['jason2']:
         # PATH_ALTI_in = '/home/datawork-cersat-public/provider/cci_seastate/products/v3/data/satellite/altimeter/l2_20Hz/l2/jason-2/YYYY/????/JA2_???_2P?????_???_YYYYMM*.nc'
         if origin_type == 'l2p':
@@ -241,6 +256,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         #         PATH_ALTI_in = rootpath+'jason-2d/YYYY/???/'+tag2+'YYYYMM*.nc'
         PATH_ALTI_in = rootpath + 'jason-2/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'JA2'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['jason3']:
         if origin_type == 'l2p':
@@ -250,6 +266,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         PATH_ALTI_in = rootpath + 'jason-3/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_ii = ""  # rootpath + 'jason-3d/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'JA3'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['sentinel3a']:
         if origin_type == 'l2p':
@@ -258,6 +275,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             tag2 = 'S3A_P4_2__LR______'
         PATH_ALTI_in = rootpath + 'sentinel-3_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S3A'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['sentinel3b']:
         if origin_type == 'l2p':
@@ -266,6 +284,7 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
             tag2 = 'S3B_P4_2__LR______'
         PATH_ALTI_in = rootpath + 'sentinel-3_b/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S3B'
+        addvarlist_saved = addvarlist
 
     if mission.lower() in ['sentinel6a']:
         if origin_type == 'l2p':
@@ -275,12 +294,14 @@ def alti_paths_cci(mission, origin_type='1hz', version='v5'):
         PATH_ALTI_in = rootpath + 'sentinel-6_a/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         PATH_ALTI_ii = ""  # rootpath + 'sentinel-6/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'S6A'
+        addvarlist_saved = addvarlist + var_supplist
 
     if mission.lower() in ['swot']:
         if origin_type == 'l2p':
             tag2 = 'ESACCI-SEASTATE-L2P-SWH-SWOT-'
         PATH_ALTI_in = rootpath + 'swot/YYYY/???/' + tag2 + 'YYYYMM*.nc'
         TAG_ALTI = tag1 + 'SWO'
+        addvarlist_saved = addvarlist + var_supplist
 
     print('path :', PATH_ALTI_in)
-    return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI
+    return PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI, addvarlist_saved

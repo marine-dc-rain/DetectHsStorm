@@ -105,11 +105,11 @@ class SatStormDetection:
             Nb_CPU = cte.Nb_CPU
         ###
         if self._args.origin == 'gdr':
-            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_GDR(self._args.mission)
+            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI, addvarlist = alti.alti_paths_GDR(self._args.mission)
         if self._args.origin == 'cci':
-            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_cci(self._args.mission)
+            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI, addvarlist = alti.alti_paths_cci(self._args.mission)
         if self._args.origin == 'l2p':
-            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI = alti.alti_paths_cci(
+            PATH_ALTI_in, PATH_ALTI_ii, TAG_ALTI, addvarlist = alti.alti_paths_cci(
                 self._args.mission, origin_type='l2p', version=self._args.version
             )
 
@@ -138,7 +138,7 @@ class SatStormDetection:
                             alti.hs_thresh,
                             alti.min_length,
                             count,
-                            alti.addvarlist,
+                            addvarlist,
                             False,
                             False,
                             alti.hs_thresh_min,
@@ -164,7 +164,7 @@ class SatStormDetection:
                         alti.hs_thresh,
                         alti.min_length,
                         count0=count,
-                        addvarlist=alti.addvarlist,
+                        addvarlist=addvarlist,
                         hs_thresh_min=alti.hs_thresh_min,
                     )
                     if _results is not None:
