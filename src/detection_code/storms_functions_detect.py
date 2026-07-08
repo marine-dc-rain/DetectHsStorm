@@ -305,13 +305,8 @@ def get_part_to_save(swh_flagged, count0, min_len=6, hs_thresh=9.0, hs_thresh_mi
     inds = np.nonzero((swh_flagged > hs_thresh))[0]
     n_data = len(swh_flagged)
 
-    if len(inds <= min_len):
+    if len(inds) <= min_len:
         return None, 0
-
-    inddif = np.diff(inds)
-    endseg = np.append(
-        np.nonzero(inddif > min_len)[0], [len(inds) - 1]
-    )  # select if min dist between segments is min len
 
     # we cut segments when the differences is bigger than min_len
     idens_by_seg = np.split(inds, np.nonzero(np.diff(inds) > min_len)[0] + 1)
@@ -382,18 +377,6 @@ def get_storms_track_from_sat_by_file(
     hs_thresh_min=5,
 ):
     try:
-        print(f"{mission=}")
-        print(f'{origin=}'),
-        print(f'{filename=}'),
-        print(f'{yy=}'),
-        print(f'{mm=}'),
-        print(f'{hs_thresh=}'),
-        print(f'{min_len=}'),
-        print(f'{count0=}'),
-        print(f'{addvarlist=}'),
-        print(f'{plot_output=}'),
-        print(f'{plot_example=}'),
-        print(f'{hs_thresh_min=}'),
         # def get_storm_by_file(mission,origin,filename,yy,mm,hs_thresh,min_len, count0=0,plot_output = False, plot_example = False):
         # --- concat [-180: 360] ----
         res = []
