@@ -429,6 +429,13 @@ def get_storms_track_from_sat_by_file(
         #        plt.plot(res.lon_max,res.lat_max,'ow',markeredgecolor='k')
         #        plt.title('detected regions')
     except Exception as ex:
+        fig_end2 = plt.figure(figsize=(12, 5))
+        plt.plot(ds.time.values, ds.swh_1hz.values, 'sk')
+        plt.plot(ds.time.values, swh_flagged, '.r')
+
+        plt.grid(True)
+        plt.title(os.path.basename(filename))
+        plt.savefig('/home/datawork-WW3/PROJECT/CCI/STORMS/v5/test.png')
         print('Error with file: ' + str(os.path.basename(filename)))
         print(f'{np.__version__=}')
         print(f'params : {min_len=}, {hs_thresh=}, {hs_thresh_min=}')
