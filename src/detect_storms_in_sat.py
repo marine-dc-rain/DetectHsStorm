@@ -148,6 +148,9 @@ class SatStormDetection:
                 ).get()
                 pool.close()
                 results = [r[0] for r in results0 if r[0] is not None]
+                # max_segm = [r.segments.values.max for r in results]
+                # len_file = [r.sizes['x'] for r in results]
+
                 if len(results) > 0:
                     r_xr = xr.concat(results, dim='x').sortby('time')
                 else:
@@ -193,7 +196,9 @@ class SatStormDetection:
         list_files.sort()
         ds = xr.open_mfdataset(list_files, combine='nested', concat_dim='x')
         ds.time.values = np.array(ds.time, dtype='timedelta64[s]') + pd.Timestamp(str(ds.reference_time.values[()]))
+        ds = ds.drop_vars('reference_time')
         segs = ds.segments.values
+        # -100 is for the last one
         ind = np.nonzero((segs[0:-1] == -100) & (segs[1:] != -100))[0]
         ind = np.concatenate([np.array([-1]), ind, np.array([len(segs) - 1])])
         size_rep = np.diff(ind)

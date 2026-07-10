@@ -320,10 +320,10 @@ def get_part_to_save(swh_flagged, count0, min_len=6, hs_thresh=9.0, hs_thresh_mi
     ind_seg_start = np.array([i[0] for i in ind_by_seg])
     ind_seg_end = np.array([i[-1] for i in ind_by_seg])
 
-    to_save = np.zeros(n_data, dtype='int') - 100
+    to_save = np.zeros(n_data, dtype='int') - 999
     countst = 0
     # bornes to work on the enlarged zone
-    ind_before1 = 0
+    ind_before1 = -1
     for iseg, (ind1, ind2, seg) in enumerate(zip(ind_seg_start, ind_seg_end, ind_by_seg)):
         inds_min = np.nonzero((swh_flagged > hs_thresh_min))[0]
         if np.sum(np.diff(seg)) < 2 * len(seg):
@@ -331,8 +331,8 @@ def get_part_to_save(swh_flagged, count0, min_len=6, hs_thresh=9.0, hs_thresh_mi
             ind_before2 = ind1
             ind_after1 = ind2
 
-            if ind_before2 >= ind_before1:
-                inds_min_sel_before = inds_min[(inds_min >= ind_before1) & (inds_min <= ind_before2)]
+            if ind_before2 > ind_before1:
+                inds_min_sel_before = inds_min[(inds_min > ind_before1) & (inds_min <= ind_before2)]
                 last_seg_before = np.split(inds_min_sel_before, np.nonzero(np.diff(inds_min_sel_before) != 1)[0] + 1)[
                     -1
                 ]
@@ -354,6 +354,7 @@ def get_part_to_save(swh_flagged, count0, min_len=6, hs_thresh=9.0, hs_thresh_mi
                     first_seg_after = first_seg_after[:imin]
                 ind_before1 = first_seg_after[-1]
                 to_save[first_seg_after] = countst + count0
+                to_save[first_seg_after[-1]] = -100
             else:
                 ind_before1 = ind_after2
             countst = countst + 1
@@ -402,7 +403,7 @@ def get_storms_track_from_sat_by_file(
         )
 
         if (to_save is not None) & (countst > 0):
-            inds = np.nonzero(to_save > -1)[0]
+            inds = np.nonzero(to_save > -200)[0]
             ds3 = ds.assign({'segments': (('time'), to_save)})
             #    ind3=np.where((ds3.segments > -1 ))[0]
             print('START:', inds[0], inds[-1], ds.swh_1hz[inds[0]].values, np.max(ds.swh_1hz[inds[:]].values))
