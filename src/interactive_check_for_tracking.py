@@ -3,11 +3,24 @@ import os
 import numpy as np
 import xarray as xr
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QLabel,
+    QFileDialog,
+    QShortcut,
+)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.colors as mcolors
 
 import cartopy.crs as ccrs
 
@@ -37,6 +50,14 @@ def find_nearest_point(click_lon, click_lat, lons, lats, tol=2):
     return None
 
 
+def relabel_sequential(arr, vmin=0):
+    ind = np.nonzero(arr >= vmin)[0]
+    labels = np.copy(arr)
+    _, lab = np.unique(labels[ind], return_inverse=True)
+    labels[ind] = lab + vmin
+    return labels
+
+
 # ===============================
 # GUI APPLICATION
 # ===============================
@@ -44,12 +65,35 @@ def find_nearest_point(click_lon, click_lat, lons, lats, tol=2):
 
 class StormEditor(QMainWindow):
 
-    def __init__(self, swh_file, storm_file):
+    def __init__(self, path, path2, year, month, ancillary_variable='hs'):
         super().__init__()
-        self.storm_file = storm_file
+
+        self.year = year
+        self.month = month
+        self.path2 = path2
+        self.path = path
+        self.var_aux = ancillary_variable
+        self.read_new_month()
+        self.init_ui()
+        self.plot()
+
+    def read_new_month(self):
+        self.swh_file = self.path + f'CCI_WW3-GLOB-30M_{self.year}{self.month:02d}_hs.nc'
+        self.storm_file = os.path.join(self.path2, f'WW3_tracking_storm_{self.year}_{self.month:02d}.nc')
+
+        yearm1 = self.year + (self.month - 1 - 1) // 12
+        monthm1 = (self.month - 1 - 1) % 12 + 1
+        storm_file_before = os.path.join(self.path2, f'WW3_tracking_storm_{yearm1}_{monthm1:02d}_checked.nc')
+
         # Load datasets
-        self.ds_swh = xr.open_dataset(swh_file)
-        self.ds_storm = xr.open_dataset(storm_file)
+        self.ds_swh = xr.open_dataset(self.swh_file)
+        self.ds_storm = xr.open_dataset(self.storm_file)
+        if os.path.isfile(storm_file_before):
+            self.ds_storm_old = xr.open_dataset(storm_file_before)
+            self.cnt_min = self.ds_storm_old["numStorm"].max().values + 1
+        else:
+            self.ds_storm_old = None
+            self.cnt_min = 0
         self.time_steps = self.ds_swh.time.values.copy()
         self.current_time_idx = 0
 
@@ -57,28 +101,57 @@ class StormEditor(QMainWindow):
         self.lon = self.ds_storm["longitude"].values.copy()
         self.lat = self.ds_storm["latitude"].values.copy()
         self.time = self.ds_storm["time"].values.copy()
-        self.label = self.ds_storm["numStorm"].values.copy()
+        self.label = self.ds_storm["numStorm"].values.copy() + self.cnt_min
+        self.hs = self.ds_storm["hs_max"].values.copy()
+
+        if self.ds_storm_old is not None:
+            self.add_last_step_fromprev()
 
         self.selected_points = []
 
-        self.init_ui()
-        self.plot()
+    # --------------------------
+    def add_last_step_fromprev(self):
+        lon_old = self.ds_storm_old["longitude"].values.copy()
+        lat_old = self.ds_storm_old["latitude"].values.copy()
+        time_old = self.ds_storm_old["time"].values.copy()
+        label_old = self.ds_storm_old["numStorm"].values.copy()
+        hs_old = self.ds_storm_old["hs_max"].values.copy()
+        t_val = self.time_steps[0] - np.timedelta64(1, 'h')
+        mask = time_old == t_val
+        idxs0 = np.nonzero(mask)[0]
+        labels_old_selected = label_old[idxs0]
+
+        idxs_old = []
+        for l in np.unique(labels_old_selected):
+            idxs_old.extend(np.nonzero(label_old == l)[0])
+
+        self.lon = np.concat([lon_old[idxs_old], self.lon])
+        self.lat = np.concat([lat_old[idxs_old], self.lat])
+        self.time = np.concat([time_old[idxs_old], self.time])
+        self.label = np.concat([label_old[idxs_old], self.label])
+        self.hs = np.concat([hs_old[idxs_old], self.hs])
 
     # ---------------------------
     def init_ui(self):
         self.setWindowTitle("Storm trajectory editor")
 
-        self.figure = plt.figure(figsize=(18, 15))
+        self.figure = plt.figure(figsize=(24, 12))
+
+        self.ax_main = self.figure.add_subplot(211)
+        self.ax_aux = self.figure.add_subplot(212)
+
         self.canvas = FigureCanvas(self.figure)
 
         self.canvas.mpl_connect("button_press_event", self.on_click)
 
+        btn_last = QPushButton("Last time")
         btn_next = QPushButton("Next time")
         btn_prev = QPushButton("Prev time")
         btn_merge = QPushButton("Merge")
         btn_split = QPushButton("Split")
         btn_save = QPushButton("Save")
 
+        btn_last.clicked.connect(self.last_time)
         btn_next.clicked.connect(self.next_time)
         btn_prev.clicked.connect(self.prev_time)
         btn_merge.clicked.connect(self.merge)
@@ -87,49 +160,95 @@ class StormEditor(QMainWindow):
 
         self.info = QLabel("Select points...")
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.info)
-        layout.addWidget(btn_merge)
-        layout.addWidget(btn_split)
-        layout.addWidget(btn_prev)
-        layout.addWidget(btn_next)
-        layout.addWidget(btn_save)
+        layout_maps = QVBoxLayout()
+        layout_maps.addWidget(self.canvas)
+        layout_maps.addWidget(self.info)
+        layout_btn = QVBoxLayout()
+        layout_btn.addWidget(btn_merge)
+        layout_btn.addWidget(btn_split)
+        layout_btn.addWidget(btn_prev)
+        layout_btn.addWidget(btn_next)
+        layout_btn.addWidget(btn_last)
+        layout_btn.addWidget(btn_save)
 
         container = QWidget()
-        container.setLayout(layout)
+        # container.setLayout(layout)
         self.setCentralWidget(container)
+        main_layout = QHBoxLayout(container)
+        main_layout.addLayout(layout_maps)
+        main_layout.addLayout(layout_btn)
+
+        btn_last.setFocusPolicy(Qt.NoFocus)
+        btn_next.setFocusPolicy(Qt.NoFocus)
+        btn_prev.setFocusPolicy(Qt.NoFocus)
+        btn_merge.setFocusPolicy(Qt.NoFocus)
+        btn_split.setFocusPolicy(Qt.NoFocus)
+        btn_save.setFocusPolicy(Qt.NoFocus)
+
+        QShortcut(QKeySequence(Qt.Key_Right), self, self.next_time)
+        QShortcut(QKeySequence(Qt.Key_Left), self, self.prev_time)
+        QShortcut(QKeySequence(Qt.Key_M), self, self.merge)
+        QShortcut(QKeySequence(Qt.Key_S), self, self.split)
 
     # ---------------------------
     def plot(self):
         self.figure.clear()
+        self.ax_main = self.figure.add_subplot(211)
+        self.ax_aux = self.figure.add_subplot(212)
 
-        ax = plt.axes()  # projection=ccrs.PlateCarree())
-        # ax.coastlines()
+        ax1 = self.ax_main
+        ax2 = self.ax_aux
 
         t_val = self.time_steps[self.current_time_idx]
 
         # SWH field
         swh = self.ds_swh["hs"].isel(time=self.current_time_idx)
+        aux = self.ds_swh[self.var_aux].isel(time=self.current_time_idx)
 
         ind_lon = np.nonzero(self.ds_swh["longitude"].values < 0)[0]
         swh_bis = np.concat([swh.values, swh.isel(longitude=ind_lon).values], axis=1)
+        aux_bis = np.concat([aux.values, aux.isel(longitude=ind_lon).values], axis=1)
+
         lon_bis = np.concat(
             [self.ds_swh["longitude"].values, self.ds_swh["longitude"].isel(longitude=ind_lon).values + 360]
         )
-        ax.pcolormesh(lon_bis, self.ds_swh["latitude"], swh_bis)  # , transform=ccrs.PlateCarree())
+
+        # --- Colormap for hs -----
+        colors1 = plt.cm.viridis(np.linspace(0.0, 1, 128))
+        colors2 = plt.cm.plasma_r(np.linspace(0, 1, 128))
+        # combine them and build a new colormap
+        colors = np.vstack((colors1, colors2))
+        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        norm = mcolors.TwoSlopeNorm(vmin=0, vcenter=9, vmax=16)
+        # # Create a ListedColormap from the merged colors
+        im = ax1.pcolormesh(lon_bis, self.ds_swh["latitude"], swh_bis, cmap=mymap, norm=norm)
+        plt.colorbar(im, ax=ax1)
+
+        # combine them and build a new colormap
+        colors = np.vstack((colors1, colors2))
+        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        norm = mcolors.TwoSlopeNorm(vmin=0, vcenter=9, vmax=16)  # TO MODIFY VALUES
+
+        im = ax2.pcolormesh(lon_bis, self.ds_swh["latitude"], aux_bis, cmap=mymap, norm=norm)
+        plt.colorbar(im, ax=ax2)
 
         # Storm points at T and T-1
         mask_t = self.time == t_val
         mask_tm1 = self.time == self.get_prev_time(t_val)
 
-        self.plot_points(ax, mask_tm1, 'v', "blue", 'T-1')
-        self.plot_points(ax, mask_t, '^', "red", 'T')
+        self.plot_points(ax1, mask_tm1, 'v', "blue", 'T-1')
+        self.plot_points(ax1, mask_t, '^', "red", 'T')
 
-        # ax.set_global()
-        ax.set_xlim((-180, 360))
-        ax.set_title(t_val)
-        ax.legend(loc='upper left')
+        self.plot_points(ax2, mask_tm1, 'v', "blue", 'T-1')
+        self.plot_points(ax2, mask_t, '^', "red", 'T')
+
+        ax1.set_xlim((-180, 360))
+        ax1.set_title(t_val)
+        ax1.legend(loc='upper left')
+
+        ax2.set_xlim((-180, 360))
+        ax2.set_title(t_val)
+        ax2.legend(loc='upper left')
         self.canvas.draw()
 
     # ---------------------------
@@ -171,11 +290,17 @@ class StormEditor(QMainWindow):
         for lab in np.unique(self.label[idxs]):
             idx = self.label == lab
             lon_traj = self.lon[idx].copy()
-            if np.std(lon_traj) > 100:
+            hs_traj = self.hs[idx].copy()
+            if np.std(lon_traj) > 50:
                 lon_traj[lon_traj < 0] = lon_traj[lon_traj < 0] + 360
-            ax.plot(
-                lon_traj, self.lat[idx], color=default_cycler[lab % 10], linewidth=1
-            )  # , transform=ccrs.PlateCarree()
+            if np.max(hs_traj) >= 10:
+                lw = 2
+                c = 'r'
+                ax.plot(lon_traj, self.lat[idx], color=c, linewidth=lw, zorder=9)
+
+            lw = 1
+            c = default_cycler[lab % 10]
+            ax.plot(lon_traj, self.lat[idx], color=c, linewidth=lw, zorder=10)  # , transform=ccrs.PlateCarree()
 
     # ---------------------------
     def get_next_time(self, t):
@@ -220,14 +345,17 @@ class StormEditor(QMainWindow):
         t_prev = self.get_prev_time(t_current)
 
         # mask only T and T-1 points
-        valid_mask = (self.time == t_current) | (self.time == t_prev)
 
+        valid_mask = (self.time == t_current) | (self.time == t_prev)
         valid_indices = np.where(valid_mask)[0]
+
+        if len(self.selected_points) == 1:
+            valid_indices = np.setdiff1d(valid_indices, self.selected_points)
 
         if len(valid_indices) == 0:
             return
 
-        idx_local = find_nearest_point(click_lon, click_lat, self.lon[valid_indices], self.lat[valid_indices], tol=3)
+        idx_local = find_nearest_point(click_lon, click_lat, self.lon[valid_indices], self.lat[valid_indices], tol=6)
 
         if idx_local is None:
             return
@@ -311,6 +439,10 @@ class StormEditor(QMainWindow):
         self.plot()
 
     # ---------------------------
+    def last_time(self):
+        self.current_time_idx = len(self.ds_swh.time) - 1
+        self.plot()
+
     def next_time(self):
         self.current_time_idx += 1
         self.current_time_idx = min(self.current_time_idx, len(self.ds_swh.time) - 1)
@@ -326,7 +458,9 @@ class StormEditor(QMainWindow):
         idx = np.where(self.ds_swh.time.values == t)[0][0]
         if idx > 0:
             return self.ds_swh.time.values[idx - 1]
-        return 0
+        else:
+            return t - np.timedelta64(1, 'h')
+        # return 0
 
     # ---------------------------
     def update_info(self):
@@ -347,19 +481,23 @@ class StormEditor(QMainWindow):
         )
         if not fname:
             return
-
-        ds_out = xr.Dataset(
-            {
-                "longitude": (["x"], self.lon),
-                "latitude": (["x"], self.lat),
-                "time": (["x"], self.time),
-                "numStorm": (["x"], self.label),
-            }
-        )
+        print(fname)
+        self.label = relabel_sequential(self.label, vmin=self.cnt_min)
+        ind = np.nonzero(self.time >= self.time_steps[0])[0]
+        ds_out = self.ds_storm
+        ds_out.numStorm.values = self.label[ind]
+        print(np.min(ds_out.numStorm.values))
 
         ds_out.attrs["paused_at_time_index"] = int(self.current_time_idx)
 
         ds_out.to_netcdf(fname)
+
+        self.year = self.year + (self.month + 1 - 1) // 12
+        self.month = (self.month + 1 - 1) % 12 + 1
+        self.ds_swh.close()
+        self.ds_storm.close()
+        self.read_new_month()
+        self.plot()
 
 
 # ===============================
@@ -367,16 +505,20 @@ class StormEditor(QMainWindow):
 # ===============================
 
 if __name__ == "__main__":
-    path = (
-        '/home/mdecarlo/Documents/perso/ifremer/Sauvegarde_MDC/Documents/Documents/PROJETS/TBH_Tempetes_bdd_historique/'
-    )
-    swh_file = path + 'LOPS_WW3-GLOB-30M_199301.nc'
+    # path = (
+    #     '/home/mdecarlo/Documents/perso/ifremer/Sauvegarde_MDC/Documents/Documents/PROJETS/TBH_Tempetes_bdd_historique/'
+    # )
+    year = 1996
+    month = 1
 
-    path2 = '/home/mdecarlo/Documents/Projets/CCI_SeaState/DATA_V4'
+    path = '/home/mdecarlo/Documents/Projets/CCI_SeaState/DATA_MODEL/WW3/'
+    path2 = '/home/mdecarlo/Documents/Projets/CCI_SeaState/DATA_MODEL/tracking/'
     # storm_file = path + 'Model/New_detect/WW3/tracking/transi/tracking_1993_01_xr.nc'
-    storm_file = os.path.join(path2, 'WW3_tracking_storm_1993_01.nc')
-
+    # while year < 2026:
     app = QApplication(sys.argv)
-    window = StormEditor(swh_file, storm_file)
+    window = StormEditor(path, path2, year, month)  # swh_file, storm_file, storm_file_before)
     window.show()
     sys.exit(app.exec_())
+    # year = year + (month + 1 - 1) // 12
+    # month = (month + 1 - 1) % 12 + 1
+    # print(year)
